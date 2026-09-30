@@ -12,6 +12,8 @@
     "test:e2e": "node tests/e2e-mobile.mjs",
     "dev:cf": "wrangler pages dev dist --local",
     "deploy": "vite build && wrangler pages deploy dist --project-name cloudflare-tab --branch master",
+    "deploy:pages": "npm run build && npm run db:migrate && wrangler pages deploy dist --project-name cloudflare-tab --branch master",
+    "deploy:workers": "npm run build && npm run db:migrate && wrangler deploy -c wrangler.workers.toml",
     "db:migrate": "wrangler d1 execute cloudflare-tab-db --remote --file schema.sql",
     "db:migrate:local": "wrangler d1 execute cloudflare-tab-db --local --file schema.sql",
     "account:create": "node scripts/create-account.mjs"

@@ -35,9 +35,19 @@ npm run test:e2e       # 移动视口 e2e（375×812）
 ## 部署
 
 1. 创建 D1 数据库：`npx wrangler d1 create cloudflare-tab-db`
-2. 将返回的 `database_id` 填入 `wrangler.toml`
+2. 将返回的 `database_id` 填入 `wrangler.toml`（Pages）与 `wrangler.workers.toml`（Workers）
 3. 执行迁移：`npm run db:migrate`
-4. 部署：`npm run deploy`（Pages 项目 `cloudflare-tab`）
+4. 两种部署方式二选一（均自动执行 D1 迁移）：
+
+```bash
+# 方式一：Cloudflare Pages（原方式）
+npm run deploy:pages
+
+# 方式二：Workers（静态资产 + Worker 统一入口）
+npm run deploy:workers
+```
+
+Workers 模式说明：`/api/*` 由 Worker 分发核心处理（与 Pages 共用 `functions/lib/dispatch.ts`），其余请求由静态资产层响应（SPA 回退）。部署后需设置 Secret：`JWT_SECRET`。
 
 ## 目录结构
 
