@@ -45,6 +45,15 @@ export default defineConfig({
     assetsDir: 'assets',
     rollupOptions: {
       input: join(root, 'index.html'),
+      output: {
+        // P1-3 拆包：antd 系与 react 系独立 chunk，antd 仅由懒加载设置抽屉/编辑弹窗引入，首屏不加载
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined;
+          if (/[\\/]node_modules[\\/](antd|@ant-design[\\/][^\\/]+|rc-[\\w-]+|@rc-component[\\/][^\\/]+|dayjs)[\\/]/.test(id)) return 'antd';
+          if (/[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler|@remix-run)[\\/]/.test(id)) return 'react';
+          return undefined;
+        },
+      },
     },
   },
 });

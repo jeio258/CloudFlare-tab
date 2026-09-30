@@ -1,6 +1,6 @@
 // 首页：对齐参考的顶部锚定节奏（时钟 y62 / 搜索 y174 / 卡行 y262，gap 32·40）
 // 沉浸状态（immersive）：隐藏卡片网格与挂件，仅保留时间/日期/搜索框与右上菜单按钮；四方块按钮或时间/日期点击切换
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import WallpaperLayer from '../components/home/WallpaperLayer';
 import ClockAndDate from '../components/home/ClockAndDate';
 import SearchBar from '../components/home/SearchBar';
@@ -10,11 +10,13 @@ import AvatarMenu from '../components/home/AvatarMenu';
 import WeatherChip from '../components/home/WeatherChip';
 import HistoryWidget from '../components/home/HistoryWidget';
 import DisguiseLayer from '../components/home/DisguiseLayer';
-import CardEditModal from '../components/settings/CardEditModal';
 import { HotEventsCard, ExchangeRateCard } from '../components/home/Widgets';
-import { SettingsDrawer } from '../components/settings/SettingsDrawer';
 import type { SettingsTab } from '../components/settings/SettingsDrawer';
 import { useSite } from '../store/site';
+
+// P1-3 拆包：设置抽屉/卡片编辑弹窗含全量 antd，按需加载（首屏零 antd）
+const SettingsDrawer = lazy(() => import('../components/settings/SettingsDrawer').then((m) => ({ default: m.SettingsDrawer })));
+const CardEditModal = lazy(() => import('../components/settings/CardEditModal'));
 
 // 右上四方块菜单按钮（沉浸状态切换入口之一）
 function GridToggleButton({ immersive, onToggle }: { immersive: boolean; onToggle: () => void }) {
@@ -35,11 +37,15 @@ function GridToggleButton({ immersive, onToggle }: { immersive: boolean; onToggl
 export default function HomePage() {
   const { cards, settings, updateSettings } = useSite();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  // 懒加载挂载标记：首次打开才拉取含 antd 的 chunk（挂载即加载 vs open=false 的坑）
+  const [drawerMounted, setDrawerMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<SettingsTab>('home');
   const [editTarget, setEditTarget] = useState<string | 'new' | null>(null);
+  const [editMounted, setEditMounted] = useState(false);
 
   const openTab = (tab: SettingsTab) => {
     setActiveTab(tab);
+    setDrawerMounted(true);
     setDrawerOpen(true);
   };
 
@@ -89,7 +95,7 @@ export default function HomePage() {
                   groups={settings.cardGroups}
                   onAddCard={() => openTab('cards')}
                   onOpenSettings={() => openTab('home')}
-                  onEditCard={(id) => setEditTarget(id)}
+                  onEditCard={(id) => { setEditMounted(true); setEditTarget(id); }}
                 />
               </div>
               {(settings.showHotEvents || settings.showExchangeRate || settings.showHistoryWidget) && (
@@ -110,13 +116,19 @@ export default function HomePage() {
       <GridToggleButton immersive={immersive} onToggle={toggleImmersive} />
       {settings.showWeather && !immersive ? <WeatherChip /> : null}
       <DisguiseLayer />
-      <SettingsDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        active={activeTab}
-        onChange={setActiveTab}
-      />
-      <CardEditModal open={editTarget !== null} cardId={editTarget} onClose={() => setEditTarget(null)} />
+      {(drawerMounted || editMounted) && (
+        <Suspense fallback={null}>
+          <SettingsDrawer
+            open={drawerOpen}
+            onClose={() => setDrawerOpen(false)}
+            active={activeTab}
+            onChange={setActiveTab}
+          />
+          {(editMounted || editTarget !== null) && (
+            <CardEditModal open={editTarget !== null} cardId={editTarget} onClose={() => setEditTarget(null)} />
+          )}
+        </Suspense>
+      )}
     </div>
   );
 }

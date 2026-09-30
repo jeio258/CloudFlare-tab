@@ -298,7 +298,7 @@ const authHdr = { authorization: token };
     await notifClose.click({ force: true }).catch(() => {});
     await page.waitForTimeout(500);
   }
-  await page.locator('.ant-avatar').first().click();
+  await page.locator('button[aria-label="用户入口"]').first().click();
   await page.waitForTimeout(1200);
   // 头像直接滑出抽屉（下拉弹窗已删），未登录默认落在个人中心登录面板
   await page.waitForTimeout(500);

@@ -1,6 +1,7 @@
 // 卡片编辑弹窗（对齐上游 addorEditCardForm 弹窗形式）：卡片管理与首页 hover 编辑共用
 import { useEffect, useState } from 'react';
-import { Button, Form, Input, InputNumber, Modal, Select, message } from 'antd';
+import { ConfigProvider, Button, Form, Input, InputNumber, Modal, Select, message } from 'antd';
+import zhCN from 'antd/locale/zh_CN';
 import { CloudDownloadOutlined } from '@ant-design/icons';
 import { useSite } from '../../store/site';
 import { fetchSiteInfoWithFavicon } from '../../lib/siteInfo';
@@ -97,6 +98,7 @@ export default function CardEditModal({ open, cardId, onClose }: Props) {
   const isLink = !form.getFieldValue('type') || form.getFieldValue('type') === 'link';
 
   return (
+    <ConfigProvider locale={zhCN}>
     <Modal
       title={cardId === 'new' ? '添加卡片' : '编辑卡片'}
       open={open}
@@ -189,5 +191,6 @@ export default function CardEditModal({ open, cardId, onClose }: Props) {
         </Form.Item>
       </Form>
     </Modal>
+    </ConfigProvider>
   );
 }

@@ -1,9 +1,7 @@
 // 卡片区：统一方格网格布局（融合原 standard/squares 两形态，默认方格模式）
 // 64px 格 + 列 gap 32/行 gap 40（对齐参考站实测）；size 六选项 → 网格占格；拖拽换位/hover 编辑删除/右键/分组 tabs 全保留
 import { cloneElement, useEffect, useRef, useState } from 'react';
-import type { DragEvent as RDragEvent, ReactElement, ReactNode } from 'react';
-import { Dropdown } from 'antd';
-import type { MenuProps } from 'antd';
+import type { DragEvent as RDragEvent, MouseEvent as ReactMouseEvent, ReactElement, ReactNode } from 'react';
 import { renderWidget, setWidgetCtx, type WidgetType } from './WidgetCards';
 import type { HomeCard } from '../../api/types';
 import { useSite } from '../../store/site';
@@ -235,39 +233,59 @@ function withLongPress(node: ReactElement): ReactElement {
   });
 }
 
-  // 右键/长按菜单（批量编辑/编辑/复制链接/换位/删除）；换位=与当前分组视图内相邻卡交换，移动端借此获得换位能力
+  // 右键/长按菜单（批量编辑/编辑/复制链接/换位/删除）：自绘菜单（P1-3 去 antd Dropdown），固定定位+视口内钳位
+  interface CtxMenuState { x: number; y: number; card: HomeCard; idxShown: number }
+  const [ctxMenu, setCtxMenu] = useState<CtxMenuState | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!ctxMenu) return;
+    const onDown = (e: PointerEvent) => {
+      if (!menuRef.current?.contains(e.target as Node)) setCtxMenu(null);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setCtxMenu(null);
+    };
+    document.addEventListener('pointerdown', onDown, true);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onDown, true);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [ctxMenu]);
+
+  const onCtxAction = (state: CtxMenuState, key: string) => {
+    const { card, idxShown } = state;
+    if (key === 'batch' && onAddCard) onAddCard();
+    else if (key === 'edit' && onEditCard) onEditCard(card.id);
+    else if (key === 'copy') navigator.clipboard?.writeText(card.url).catch(() => {});
+    else if (key === 'swapPrev' || key === 'swapNext') {
+      const j = key === 'swapPrev' ? idxShown - 1 : idxShown + 1;
+      if (idxShown < 0 || j < 0 || j >= shown.length) return;
+      const from = cards.findIndex((x) => x.id === card.id);
+      const to = cards.findIndex((x) => x.id === shown[j].id);
+      if (from < 0 || to < 0 || from === to) return;
+      const next = [...cards];
+      [next[from], next[to]] = [next[to], next[from]];
+      setCards(next);
+    } else if (key === 'delete' && confirm(`删除卡片「${card.title}」？`)) setCards(cards.filter((x) => x.id !== card.id));
+    setCtxMenu(null);
+  };
+
   const ctxWrap = (c: HomeCard, node: ReactElement) => {
     const idxShown = shown.findIndex((x) => x.id === c.id);
-    const items: MenuProps['items'] = [
-      { key: 'batch', label: '批量编辑' },
-      { key: 'edit', label: '编辑此卡片' },
-      { key: 'copy', label: '复制链接' },
-      { type: 'divider' },
-      { key: 'swapPrev', label: '与上一张交换', disabled: idxShown <= 0 },
-      { key: 'swapNext', label: '与下一张交换', disabled: idxShown < 0 || idxShown >= shown.length - 1 },
-      { type: 'divider' },
-      { key: 'delete', label: '删除此卡片', danger: true },
-    ];
-    const onClick: MenuProps['onClick'] = ({ key }) => {
-      if (key === 'batch' && onAddCard) onAddCard();
-      else if (key === 'edit' && onEditCard) onEditCard(c.id);
-      else if (key === 'copy') navigator.clipboard.writeText(c.url);
-      else if (key === 'swapPrev' || key === 'swapNext') {
-        const j = key === 'swapPrev' ? idxShown - 1 : idxShown + 1;
-        if (idxShown < 0 || j < 0 || j >= shown.length) return;
-        const from = cards.findIndex((x) => x.id === c.id);
-        const to = cards.findIndex((x) => x.id === shown[j].id);
-        if (from < 0 || to < 0 || from === to) return;
-        const next = [...cards];
-        [next[from], next[to]] = [next[to], next[from]];
-        setCards(next);
-      } else if (key === 'delete' && confirm(`删除卡片「${c.title}」？`)) setCards(cards.filter((x) => x.id !== c.id));
-    };
-    return (
-      <Dropdown trigger={['contextMenu']} menu={{ items, onClick }}>
-        {withLongPress(node)}
-      </Dropdown>
-    );
+    return cloneElement(withLongPress(node), {
+      onContextMenu: (e: ReactMouseEvent) => {
+        e.preventDefault();
+        // 视口内钳位：菜单约 176×232，右/下溢出时回推
+        setCtxMenu({
+          x: Math.min(e.clientX, window.innerWidth - 188),
+          y: Math.min(e.clientY, window.innerHeight - 244),
+          card: c,
+          idxShown,
+        });
+      },
+    });
   };
 
   // 单网格卡渲染：移动 4 列（一行四个，窄格纯图标）/ 桌面 64px auto-fill（窄格纯图标、宽格横版）
@@ -366,6 +384,42 @@ function withLongPress(node: ReactElement): ReactElement {
           </button>
         )}
       </div>
+      {ctxMenu && (
+        <div
+          ref={menuRef}
+          role="menu"
+          aria-label={`卡片菜单：${ctxMenu.card.title}`}
+          className="fixed z-[1000] min-w-44 overflow-hidden rounded-lg bg-white py-1 shadow-glass"
+          style={{ left: ctxMenu.x, top: ctxMenu.y }}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          {([
+            { key: 'batch', label: '批量编辑', disabled: !onAddCard },
+            { key: 'edit', label: '编辑此卡片', disabled: !onEditCard },
+            { key: 'copy', label: '复制链接', disabled: false },
+            { key: 'sep1' },
+            { key: 'swapPrev', label: '与上一张交换', disabled: ctxMenu.idxShown <= 0 },
+            { key: 'swapNext', label: '与下一张交换', disabled: ctxMenu.idxShown < 0 || ctxMenu.idxShown >= shown.length - 1 },
+            { key: 'sep2' },
+            { key: 'delete', label: '删除此卡片', danger: true },
+          ] as { key: string; label?: string; disabled?: boolean; danger?: boolean }[]).map((it) =>
+            it.key.startsWith('sep') ? (
+              <div key={it.key} className="my-1 h-px bg-black/10" />
+            ) : (
+              <button
+                key={it.key}
+                type="button"
+                role="menuitem"
+                disabled={it.disabled}
+                onClick={() => onCtxAction(ctxMenu, it.key)}
+                className={`block w-full px-3 py-2 text-left text-sm transition-colors hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 ${it.danger ? 'text-red-500' : 'text-ink'}`}
+              >
+                {it.label}
+              </button>
+            )
+          )}
+        </div>
+      )}
     </div>
   );
 }

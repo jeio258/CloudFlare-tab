@@ -1,6 +1,7 @@
 // 设置抽屉（唯一导航入口）：左侧菜单列 + 右侧面板；点头像直接滑出
 import { lazy, Suspense } from 'react';
-import { Drawer, Menu } from 'antd';
+import { ConfigProvider, Drawer, Menu } from 'antd';
+import zhCN from 'antd/locale/zh_CN';
 import type { MenuProps } from 'antd';
 import {
   UserOutlined, HomeOutlined, ClockCircleOutlined, SearchOutlined,
@@ -47,7 +48,8 @@ export function SettingsDrawer({ open, onClose, active, onChange }: Props) {
   ];
 
   return (
-    <Drawer title="设置" placement="right" width="min(420px, 100vw)" open={open} onClose={onClose}>
+    <ConfigProvider locale={zhCN}>
+      <Drawer title="设置" placement="right" width="min(420px, 100vw)" open={open} onClose={onClose}>
       <div className="flex h-full w-full">
         <div className="w-32 shrink-0 border-r border-gray-200">
           <Menu
@@ -79,5 +81,6 @@ export function SettingsDrawer({ open, onClose, active, onChange }: Props) {
         </div>
       </div>
     </Drawer>
+    </ConfigProvider>
   );
 }
