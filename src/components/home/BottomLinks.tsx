@@ -11,6 +11,9 @@ interface Props {
 export default function BottomLinks({ onOpenSettings, showYiyan }: Props) {
   const { settings } = useSite();
   const links = settings.bottomLinks || [];
+  // 天气浮窗显示时文字区整体右移，水平隔离防遮挡（浮窗左下固定，宽约 120px）
+  const chipShown = settings.showWeather && !settings.immersive;
+  const textX = chipShown ? 'left-36 right-3' : 'inset-x-0';
   return (
     <div className="pointer-events-none fixed bottom-3 z-10 w-full">
       {/* 页脚一言（每日一言开关，置于页脚） */}
@@ -28,7 +31,7 @@ export default function BottomLinks({ onOpenSettings, showYiyan }: Props) {
           </svg>
         </button>
         {/* 中央：链接列表（600 12px Roboto 纯白，项间 | 分隔） */}
-        <div className="absolute inset-x-0 flex items-center justify-center gap-2 font-semibold text-white" style={{ fontFamily: 'Roboto, arial, sans-serif' }}>
+        <div className={`absolute ${textX} flex items-center justify-center gap-2 font-semibold text-white`} style={{ fontFamily: 'Roboto, arial, sans-serif' }}>
           {links.map((l, i) => (
             <span key={`${l.name}-${i}`} className="flex items-center gap-2">
               {i > 0 && <span className="pointer-events-none text-white/60">|</span>}
@@ -53,11 +56,13 @@ export default function BottomLinks({ onOpenSettings, showYiyan }: Props) {
 
 // 页脚一言（置于链接行上方，每日一言开关控制）
 function YiyanFooter() {
+  const { settings } = useSite();
   const { data, err } = useFetch<{ content: string }>('/api/yiyan');
+  const chipShown = settings.showWeather && !settings.immersive;
   const text = err ? '' : (data?.content?.trim() || '');
   if (!text) return null;
   return (
-    <div className="absolute inset-x-0 bottom-9 flex items-center justify-center text-xs text-white/85" style={{ fontFamily: 'Roboto, arial, sans-serif' }}>
+    <div className={`absolute bottom-9 ${chipShown ? 'left-36 right-3' : 'inset-x-0'} flex items-center justify-center text-xs text-white/85`} style={{ fontFamily: 'Roboto, arial, sans-serif' }}>
       {text} —— 一言
     </div>
   );
