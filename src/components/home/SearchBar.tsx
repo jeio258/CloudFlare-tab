@@ -196,10 +196,16 @@ export default function SearchBar() {
             className="h-full w-full min-w-0 bg-transparent px-1 font-medium text-ink outline-none placeholder:text-ink/40"
           />
           {focus && q.trim() && sugs.length > 0 && (
-            <div className="absolute left-0 top-full z-[60] mt-1 w-full overflow-hidden rounded-lg bg-white py-1 shadow-glass">
+            <div
+              role="listbox"
+              aria-label="搜索联想"
+              className="absolute left-0 top-full z-[60] mt-1 w-full overflow-hidden rounded-lg bg-white py-1 shadow-glass"
+            >
               {sugs.map((s, i) => (
                 <div
                   key={`${s}-${i}`}
+                  role="option"
+                  aria-selected={false}
                   onMouseDown={(e) => {
                     e.preventDefault(); // 防止 input 失焦
                   }}
@@ -253,6 +259,7 @@ export default function SearchBar() {
         <div className="flex items-center self-stretch">
           <button
             type="button"
+            aria-label="搜索"
             onClick={() => go()}
             className={`mx-2 my-1 flex items-center justify-center self-center rounded-full text-ink transition-colors hover:bg-black/10 active:scale-95 ${
               settings.searchBtnStyle === 'text'
