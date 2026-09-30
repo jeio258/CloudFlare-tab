@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:cloud": "npm run build && npm run db:migrate",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.functions.json",
     "test": "node tests/e2e.mjs",
@@ -39,5 +40,8 @@
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3",
     "wrangler": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
