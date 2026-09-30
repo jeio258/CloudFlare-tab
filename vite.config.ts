@@ -6,7 +6,9 @@ import { dirname, join } from 'node:path';
 
 const root = dirname(fileURLToPath(import.meta.url));
 
-// Cloudflare Pages 部署产物：dist/ = 前端构建 + functions/（Pages Functions）+ _redirects + _headers
+// Cloudflare Pages 部署产物：dist/ = 前端构建 + functions/（Pages Functions）+ _headers
+// SPA 回退不再写 _redirects（CF 环检测 code 100324 拒绝 `/* /index.html 200`）：
+// Pages 对根含 index.html 的项目自动做无扩展名路径回退，深链接 /s/* 直接命中
 const pagesPlugin = () => ({
   name: "cloudflare-tab-pages",
   async closeBundle() {
@@ -17,7 +19,6 @@ const pagesPlugin = () => ({
       if (existsSync(join(out, 'functions'))) rmSync(join(out, 'functions'), { recursive: true });
       cpSync(fns, join(out, 'functions'), { recursive: true });
     }
-    writeFileSync(join(out, '_redirects'), '/* /index.html 200\n');
     writeFileSync(
       join(out, '_headers'),
       [
