@@ -10,6 +10,11 @@
   <meta name="description" content="CloudFlare-tab 新标签页" />
   <meta name="keywords" content="cloudflare-tab,新标签页,导航,起始页" />
   <link rel="preload" as="image" href="/images/wallpaper.webp" fetchpriority="high" />
+  <!-- 字体预载：消除 CSS→font 串行往返（webfont 未载前文本不计 LCP） -->
+  <link rel="preload" as="font" type="font/woff" href="/fonts/roboto.woff" crossorigin />
+  <link rel="preload" as="font" type="font/woff" href="/fonts/roboto_bold.woff" crossorigin />
+  <!-- module 脚本自带 defer 语义，置于 head 使 JS 在 HTML 首字节后即被发现下载，不等全量解析 -->
+  <script type="module" src="/src/main.tsx"></script>
   <style>html { background: #12151a; }</style>
 </head>
 
@@ -20,7 +25,6 @@
       CloudFlare-tab 需要启用 JavaScript 才能使用，请在浏览器设置中开启后刷新页面。
     </div>
   </noscript>
-  <script type="module" src="/src/main.tsx"></script>
 </body>
 
 </html>
