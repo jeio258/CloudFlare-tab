@@ -2,7 +2,7 @@
 import { chromium, request as playwrightRequest } from 'playwright';
 
 const base = process.env.GOTAB_BASE_URL || 'http://127.0.0.1:8799';
-const USER = process.env.GOTAB_USER || 'test@gotab.local';
+const USER = process.env.GOTAB_USER || 'e2etester';
 const PASS = process.env.GOTAB_PASS || 'test123456';
 // 无 1243 浏览器时可指定已装版本（如 GOTAB_CHROMIUM=…/chromium-1234/chrome-linux64/chrome）
 const EXE = process.env.GOTAB_CHROMIUM;
@@ -93,6 +93,10 @@ const cleanupUsers = [];
 // 3. 正确登录 + getUserInfo + 同步 round-trip（对 D1 残留状态鲁棒）
 let token = '';
 {
+  // 主账号确保存在（新库/重复运行鲁棒：已存在时注册返回"用户名已存在"忽略）
+  const r0 = await api.post(`${base}/api/register`, { data: { username: USER, password: PASS } });
+  const b0 = await okJson(r0);
+  if (b0.body?.code !== 200) log(`主账号预注册: ${b0.body?.msg || b0.status}（已存在则忽略）`);
   const r = await api.post(`${base}/api/login`, { data: { username: USER, password: PASS } });
   const { body } = await okJson(r);
   eq('login code', body?.code, 200);
@@ -173,8 +177,23 @@ const authHdr = { authorization: token };
 
 // 4. isAdmin（管理员放行）
 {
-  const r = await api.get(`${base}/api/user/isAdmin`, { headers: authHdr });
-  const { body } = await okJson(r);
+  let r = await api.get(`${base}/api/user/isAdmin`, { headers: authHdr });
+  let { body } = await okJson(r);
+  if (body?.data !== true) {
+    // 本地库自举：主账号提权为管理员（仅 --local；远端库的管理员由运维提权）
+    try {
+      const { execSync } = await import('node:child_process');
+      const safeUser = USER.replace(/['"\\]/g, '');
+      execSync(
+        `npx wrangler d1 execute cloudflare-tab-db --local --command "update users set user_type = 1 where username = '${safeUser}'"`,
+        { stdio: 'pipe', cwd: process.cwd() }
+      );
+      r = await api.get(`${base}/api/user/isAdmin`, { headers: authHdr });
+      ({ body } = await okJson(r));
+    } catch (e) {
+      log(`admin 自举失败: ${String(e).slice(0, 80)}`);
+    }
+  }
   eq('isAdmin code', body?.code, 200);
   eq('isAdmin data', body?.data, true);
 }

@@ -54,6 +54,7 @@ export const setUserStatus = (env: Env, id: string, status: number) =>
 export const deleteUserCascade = (env: Env, id: string) =>
   env.DB.batch([
     env.DB.prepare('delete from user_data where user_id = ?').bind(id),
+    env.DB.prepare('delete from cards where user_id = ?').bind(id),
     env.DB.prepare('delete from users where id = ?').bind(id),
   ]);
 
@@ -150,4 +151,71 @@ export const pruneHistory = async (env: Env, keep: number) => {
     .bind(keep + 1, 0)
     .all<{ id: string }>();
   for (const r of rows.results || []) await deleteHistory(env, r.id);
+};
+
+// —— 书签行存储（cards 表）：push 时整表重建拆行写入，pull 时按 ord 排序拼回原始数组 ——
+interface CardRow {
+  card_id: string;
+  ord: number;
+  title: string;
+  sub_title: string;
+  url: string;
+  icon: string;
+  icon_color: string;
+  color: string;
+  group_name: string;
+  display_style: string;
+  type: string;
+  config: string;
+  size: string;
+  font_size: number | null;
+  font_color: string;
+  bg_color: string;
+}
+
+const toCard = (r: CardRow): Record<string, unknown> => ({
+  id: r.card_id,
+  title: r.title,
+  subTitle: r.sub_title,
+  url: r.url,
+  ...(r.icon ? { icon: r.icon } : {}),
+  ...(r.icon_color ? { iconColor: r.icon_color } : {}),
+  ...(r.color ? { color: r.color } : {}),
+  ...(r.group_name ? { group: r.group_name } : {}),
+  ...(r.display_style ? { displayStyle: r.display_style } : {}),
+  type: r.type || 'link',
+  ...(r.config ? { config: r.config } : {}),
+  ...(r.size ? { size: r.size } : {}),
+  ...(r.font_size != null ? { fontSize: r.font_size } : {}),
+  ...(r.font_color ? { fontColor: r.font_color } : {}),
+  ...(r.bg_color ? { bgColor: r.bg_color } : {}),
+});
+
+export const getUserCards = async (env: Env, userId: string): Promise<Record<string, unknown>[]> => {
+  const { results } = await env.DB.prepare('select * from cards where user_id = ? order by ord').bind(userId).all<CardRow>();
+  return (results || []).map(toCard);
+};
+
+// 整表重建：先删旧行再按数组次序写入（ord = 数组下标），保证 pull 拼回次序一致
+export const replaceUserCards = (env: Env, userId: string, cards: unknown[]) => {
+  const s = (v: unknown) => (v === undefined || v === null ? '' : String(v));
+  const n = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+  const del = env.DB.prepare('delete from cards where user_id = ?').bind(userId);
+  const ins = cards.map((raw, i) => {
+    const c = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+    return env.DB.prepare(
+      `insert into cards (user_id, card_id, ord, title, sub_title, url, icon, icon_color, color, group_name, display_style, type, config, size, font_size, font_color, bg_color)
+       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       on conflict(user_id, card_id) do update set
+         ord = excluded.ord, title = excluded.title, sub_title = excluded.sub_title, url = excluded.url,
+         icon = excluded.icon, icon_color = excluded.icon_color, color = excluded.color, group_name = excluded.group_name,
+         display_style = excluded.display_style, type = excluded.type, config = excluded.config, size = excluded.size,
+         font_size = excluded.font_size, font_color = excluded.font_color, bg_color = excluded.bg_color`
+    ).bind(
+      userId, s(c.id) || `c${i}`, i, s(c.title), s(c.subTitle), s(c.url), s(c.icon), s(c.iconColor),
+      s(c.color), s(c.group), s(c.displayStyle), s(c.type) || 'link', s(c.config), s(c.size),
+      n(c.fontSize), s(c.fontColor), s(c.bgColor)
+    );
+  });
+  return env.DB.batch([del, ...ins]);
 };

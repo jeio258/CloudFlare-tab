@@ -7,7 +7,7 @@ import {
   createToken, verifyPassword, hashPassword, newId,
 } from '../auth';
 import { checkAuthRateLimit, recordAuthRateLimit } from '../ratelimit';
-import { getUserByUsername, getUserById, insertUser, updatePassword, updateProfile, getUserData, upsertUserData } from '../db';
+import { getUserByUsername, getUserById, insertUser, updatePassword, updateProfile, getUserData, upsertUserData, getUserCards, replaceUserCards } from '../db';
 
 export const login = async ({ env, request, body }: RouteContext) => {
   const username = String(body.username || '').trim();
@@ -138,6 +138,11 @@ export const push = async ({ env, user, body }: RouteContext) => {
     throw new ApiError(409, '云端数据已更新', 409);
   }
   const newTs = Math.max(timestamp, stored + 1);
+  // 书签行存储：快照中的 cards 数组拆行写入 cards 表（ord = 数组下标）；pull 按序拼回原始数组
+  const cardsArr = data && typeof data === 'object' && Array.isArray((data as Record<string, unknown>).cards)
+    ? ((data as Record<string, unknown>).cards as unknown[])
+    : null;
+  if (cardsArr) await replaceUserCards(env, user!.id, cardsArr);
   await upsertUserData(env, user!.id, payload, newTs);
   return { timestamp: newTs };
 };
@@ -154,7 +159,16 @@ export const pullWT = async ({ env, user }: RouteContext) => {
   const row = await getUserData(env, user!.id);
   if (!row) return { timestamp: 0, data: null };
   try {
-    return { timestamp: Number(row.timestamp), data: JSON.parse(row.data) };
+    const parsed = JSON.parse(row.data) as Record<string, unknown>;
+    // 书签行存储：优先从 cards 表按 ord 拼回原始数组；行表为空但旧快照内嵌 cards 时惰性迁移
+    const cards = await getUserCards(env, user!.id);
+    if (!cards.length && Array.isArray(parsed.cards) && parsed.cards.length) {
+      await replaceUserCards(env, user!.id, parsed.cards);
+      parsed.cards = await getUserCards(env, user!.id);
+    } else if (cards.length) {
+      parsed.cards = cards;
+    }
+    return { timestamp: Number(row.timestamp), data: parsed };
   } catch {
     return { timestamp: Number(row.timestamp), data: null };
   }
