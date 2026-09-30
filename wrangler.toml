@@ -1,0 +1,13 @@
+name = "cloudflare-tab"
+pages_build_output_dir = "dist"
+compatibility_date = "2025-08-16"
+compatibility_flags = ["nodejs_compat"]
+
+d1_databases = [
+  # TODO(部署前必改)：本地执行 `npx wrangler d1 create cloudflare-tab-db`（远端），将下方 database_id 占位替换为真实 ID
+  # 本地开发/测试可直接 `npx wrangler d1 execute cloudflare-tab-db --local --file schema.sql`，不依赖真实 ID
+  { binding = "DB", database_name = "cloudflare-tab-db", database_id = "00000000-0000-0000-0000-000000000000" }
+]
+
+# Secrets（部署后设置）：
+#   JWT_SECRET     登录令牌签名密钥（>=32 字节）

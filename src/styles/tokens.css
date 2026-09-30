@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 设计令牌：颜色/阴影/圆角单一来源在 tailwind.config.js（shadow-card/shadow-glass/ink/muted 等 utility）；
+   此处仅保留 body 直接消费的变量（grep var(--*) 取证：其余 20 个零消费变量已删） */
+:root {
+  --ink: #1f2328;
+  --fs-body: 14px;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei',
+    'Helvetica Neue', Arial, sans-serif;
+  font-size: var(--fs-body);
+  color: var(--ink);
+}
+
+/* 参考自定义类（对齐原站 DOM 口径） */
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-hover-hitbox {
+  --card-visibility: 1;
+  opacity: var(--card-visibility);
+}
+
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+/* 隐藏滚动条（卡片区独立滚动，视觉上不出现滑动条） */
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}

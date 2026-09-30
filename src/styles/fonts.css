@@ -1,0 +1,20 @@
+/* 字体：对齐参考（@font-face 指向 /fonts 下 woff） */
+@font-face {
+  font-family: Roboto;
+  font-style: normal;
+  font-weight: 400;
+  src: url('/fonts/roboto.woff');
+  font-display: swap;
+}
+@font-face {
+  font-family: Roboto;
+  font-style: normal;
+  font-weight: 700;
+  src: url('/fonts/roboto_bold.woff');
+  font-display: swap;
+}
+@font-face {
+  font-family: digi;
+  src: url('/fonts/digi.woff');
+  font-display: swap;
+}
