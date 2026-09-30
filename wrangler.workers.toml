@@ -5,15 +5,16 @@ main = "worker.ts"
 compatibility_date = "2025-08-16"
 compatibility_flags = ["nodejs_compat"]
 
+# D1 绑定必须位于任何 [section] 之前（TOML 顶层键），否则会被解析进 assets 段导致绑定丢失
+d1_databases = [
+  { binding = "DB", database_name = "cloudflare-tab-db", database_id = "3ebcab90-a744-474c-b5cf-e3340c4b80f1" }
+]
+
 # 静态资产（vite 产物）：非 /api 请求由资产层响应
 [assets]
 directory = "./dist"
 binding = "ASSETS"
 not_found_handling = "single-page-application"
-
-d1_databases = [
-  { binding = "DB", database_name = "cloudflare-tab-db", database_id = "3ebcab90-a744-474c-b5cf-e3340c4b80f1" }
-]
 
 # Secrets（部署后设置）：
 #   JWT_SECRET     登录令牌签名密钥（>=32 字节）
