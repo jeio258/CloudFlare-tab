@@ -113,6 +113,20 @@ export function SiteProvider({ children }: { children: ReactNode }) {
     setCards(DEFAULT_CARDS);
   }, []);
 
+  // 浏览器标签页标题/图标即时同步（用户自定义，空值回落默认）
+  useEffect(() => {
+    document.title = settings.tabTitle || 'CloudFlare-tab';
+    const DEFAULT_ICON = '/icons/logo.png';
+    let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+    const href = settings.tabIcon || DEFAULT_ICON;
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.head.appendChild(link);
+    }
+    if (link.href !== new URL(href, location.origin).href) link.href = href;
+  }, [settings.tabTitle, settings.tabIcon]);
+
   // 公开默认主页（游客可见）：取云端默认卡片
   useEffect(() => {
     let alive = true;

@@ -219,6 +219,26 @@ export function HomePanel() {
         <span className="text-sm">每日一言（页脚）</span>
         <Switch checked={settings.showYiyan} onChange={(v) => updateSettings({ showYiyan: v })} />
       </div>
+      <Divider />
+      <div className="text-sm font-semibold">浏览器标签页</div>
+      <div>
+        <div className="mb-1 text-sm">标签页名称</div>
+        <Input
+          value={settings.tabTitle}
+          maxLength={60}
+          placeholder="默认 CloudFlare-tab"
+          onChange={(e) => updateSettings({ tabTitle: e.target.value })}
+        />
+      </div>
+      <div>
+        <div className="mb-1 text-sm">标签页图标（URL）</div>
+        <Input
+          value={settings.tabIcon}
+          placeholder="默认 /icons/logo.png"
+          onChange={(e) => updateSettings({ tabIcon: e.target.value.trim() })}
+        />
+        <div className="mt-1 text-xs text-gray-400">支持 http(s) 或站内路径；留空恢复默认。修改后即时生效并持久保存。</div>
+      </div>
     </div>
   );
 }

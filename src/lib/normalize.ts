@@ -86,6 +86,10 @@ export function normalizeSettings(raw: unknown): Partial<SiteSettings> {
       .join('\n');
   }
   if (typeof r.clockImage === 'string') out.clockImage = asset(r.clockImage);
+
+  // 标签页自定义：标题文本（截断 60），图标走资产白名单（注入 <link href>）
+  if (typeof r.tabTitle === 'string') out.tabTitle = r.tabTitle.slice(0, 60);
+  if (typeof r.tabIcon === 'string') out.tabIcon = asset(r.tabIcon);
   return out;
 }
 

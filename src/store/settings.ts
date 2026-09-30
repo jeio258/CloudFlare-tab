@@ -81,6 +81,8 @@ export interface SiteSettings {
   showHotEvents: boolean;
   showExchangeRate: boolean;
   showYiyan: boolean;
+  tabTitle: string;         // 浏览器标签页标题（''=默认 CloudFlare-tab）
+  tabIcon: string;          // 浏览器标签页图标 URL（''=默认 /icons/logo.png）
   // 简约模式：移除顶部显示自定义文本；边框/字体色 ''=禁用
   simpleRemoveHeader: boolean;
   simpleText: string;
@@ -159,6 +161,8 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   showHotEvents: false,
   showExchangeRate: false,
   showYiyan: true,
+  tabTitle: '',
+  tabIcon: '',
   simpleRemoveHeader: false,
   simpleText: '',
   simpleExitByText: true,
