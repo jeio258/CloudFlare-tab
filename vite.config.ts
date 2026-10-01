@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { cpSync, writeFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
+import { cpSync, readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -36,6 +36,17 @@ const pagesPlugin = () => ({
         '',
       ].join('\n')
     );
+    // CSS 内联：首屏唯一样式表直接进 HTML，消除阻塞渲染的串行请求（真实网络下每请求 300ms+）
+    const htmlPath = join(out, 'index.html');
+    let html = readFileSync(htmlPath, 'utf8');
+    html = html.replace(/<link rel="stylesheet"[^>]*href="(\/assets\/[^"]+\.css)"[^>]*>/g, (_, href) => {
+      const cssPath = join(out, href.slice(1));
+      if (!existsSync(cssPath)) return _;
+      const css = readFileSync(cssPath, 'utf8');
+      rmSync(cssPath);
+      return `<style>${css}</style>`;
+    });
+    writeFileSync(htmlPath, html);
   },
 });
 

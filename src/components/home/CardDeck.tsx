@@ -10,7 +10,8 @@ import { openUrl } from './SearchBar';
 interface Props {
   cards: HomeCard[];
   groups?: string[];
-  onAddCard?: () => void;
+  onAddCard?: () => void;      // 网格「+」→ 直接弹出添加卡片弹窗（一步直达）
+  onOpenCards?: () => void;    // 批量编辑/书签挂件 → 卡片管理抽屉
   onEditCard?: (id: string) => void;
   onOpenSettings?: () => void;
 }
@@ -21,11 +22,11 @@ const AddIcon = () => (
   </svg>
 );
 
-export default function CardDeck({ cards, groups = [], onAddCard, onEditCard, onOpenSettings }: Props) {
+export default function CardDeck({ cards, groups = [], onAddCard, onOpenCards, onEditCard, onOpenSettings }: Props) {
   // A8 动作卡上下文（书签管理/设置中心）
   useEffect(() => {
-    setWidgetCtx({ openCards: () => onAddCard?.(), openSettings: () => onOpenSettings?.() });
-  }, [onAddCard, onOpenSettings]);
+    setWidgetCtx({ openCards: () => onOpenCards?.(), openSettings: () => onOpenSettings?.() });
+  }, [onOpenCards, onOpenSettings]);
   const { settings, setCards } = useSite();
   const [tab, setTab] = useState('默认');
   const tabList = ['默认', ...groups];
@@ -256,7 +257,7 @@ function withLongPress(node: ReactElement): ReactElement {
 
   const onCtxAction = (state: CtxMenuState, key: string) => {
     const { card, idxShown } = state;
-    if (key === 'batch' && onAddCard) onAddCard();
+    if (key === 'batch' && onOpenCards) onOpenCards();
     else if (key === 'edit' && onEditCard) onEditCard(card.id);
     else if (key === 'copy') navigator.clipboard?.writeText(card.url).catch(() => {});
     else if (key === 'swapPrev' || key === 'swapNext') {
@@ -394,7 +395,7 @@ function withLongPress(node: ReactElement): ReactElement {
           onPointerDown={(e) => e.stopPropagation()}
         >
           {([
-            { key: 'batch', label: '批量编辑', disabled: !onAddCard },
+            { key: 'batch', label: '批量编辑', disabled: !onOpenCards },
             { key: 'edit', label: '编辑此卡片', disabled: !onEditCard },
             { key: 'copy', label: '复制链接', disabled: false },
             { key: 'sep1' },

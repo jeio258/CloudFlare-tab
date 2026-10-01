@@ -93,7 +93,8 @@ export default function HomePage() {
                 <CardDeck
                   cards={cards}
                   groups={settings.cardGroups}
-                  onAddCard={() => openTab('cards')}
+                  onAddCard={() => { setEditMounted(true); setEditTarget('new'); }}
+                  onOpenCards={() => openTab('cards')}
                   onOpenSettings={() => openTab('home')}
                   onEditCard={(id) => { setEditMounted(true); setEditTarget(id); }}
                 />
