@@ -11,7 +11,7 @@ interface Props {
   cards: HomeCard[];
   groups?: string[];
   onAddCard?: () => void;      // 网格「+」→ 直接弹出添加卡片弹窗（一步直达）
-  onOpenCards?: () => void;    // 批量编辑/书签挂件 → 卡片管理抽屉
+  onOpenCards?: (selectId?: string) => void; // 批量编辑（带卡片id直达批量模式）/书签挂件 → 卡片管理抽屉
   onEditCard?: (id: string) => void;
   onOpenSettings?: () => void;
 }
@@ -257,7 +257,7 @@ function withLongPress(node: ReactElement): ReactElement {
 
   const onCtxAction = (state: CtxMenuState, key: string) => {
     const { card, idxShown } = state;
-    if (key === 'batch' && onOpenCards) onOpenCards();
+    if (key === 'batch' && onOpenCards) onOpenCards(card.id);
     else if (key === 'edit' && onEditCard) onEditCard(card.id);
     else if (key === 'copy') navigator.clipboard?.writeText(card.url).catch(() => {});
     else if (key === 'swapPrev' || key === 'swapNext') {

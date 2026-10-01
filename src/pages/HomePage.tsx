@@ -42,6 +42,8 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('home');
   const [editTarget, setEditTarget] = useState<string | 'new' | null>(null);
   const [editMounted, setEditMounted] = useState(false);
+  // 卡片管理初始化（右键批量编辑直达）：抽屉关闭即清空，避免残留影响下次打开
+  const [cardsInit, setCardsInit] = useState<{ batch?: boolean; selectId?: string } | null>(null);
 
   const openTab = (tab: SettingsTab) => {
     setActiveTab(tab);
@@ -94,7 +96,7 @@ export default function HomePage() {
                   cards={cards}
                   groups={settings.cardGroups}
                   onAddCard={() => { setEditMounted(true); setEditTarget('new'); }}
-                  onOpenCards={() => openTab('cards')}
+                  onOpenCards={(selectId) => { setCardsInit(selectId ? { batch: true, selectId } : null); openTab('cards'); }}
                   onOpenSettings={() => openTab('home')}
                   onEditCard={(id) => { setEditMounted(true); setEditTarget(id); }}
                 />
@@ -121,9 +123,10 @@ export default function HomePage() {
         <Suspense fallback={null}>
           <SettingsDrawer
             open={drawerOpen}
-            onClose={() => setDrawerOpen(false)}
+            onClose={() => { setDrawerOpen(false); setCardsInit(null); }}
             active={activeTab}
             onChange={setActiveTab}
+            cardsInit={cardsInit}
           />
           {(editMounted || editTarget !== null) && (
             <CardEditModal open={editTarget !== null} cardId={editTarget} onClose={() => setEditTarget(null)} />

@@ -30,15 +30,15 @@ async function fetchIconsBatch(targets: { id: string; url: string }[], apply: (i
   await Promise.all([worker(), worker()]);
 }
 
-export function CardManagerPanel() {
+export function CardManagerPanel({ initialBatch = false, initialSelect }: { initialBatch?: boolean; initialSelect?: string } = {}) {
   const { cards, setCards, settings, updateSettings } = useSite();
   const groups = settings.cardGroups || [];
   // 编辑弹窗（对齐上游弹出式弹窗卡片交互）
   const [editTarget, setEditTarget] = useState<string | 'new' | null>(null);
   const [imported, setImported] = useState(0);
-  // 批量模式
-  const [batch, setBatch] = useState(false);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  // 批量模式（右键「批量编辑」一步直达：initialBatch + 预选卡片）
+  const [batch, setBatch] = useState(initialBatch);
+  const [selected, setSelected] = useState<Set<string>>(new Set(initialSelect ? [initialSelect] : []));
   const [newGroup, setNewGroup] = useState('');
   const [renameMap, setRenameMap] = useState<Record<string, string>>({});
   const [batchGroup, setBatchGroup] = useState('');

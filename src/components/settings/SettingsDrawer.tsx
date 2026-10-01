@@ -26,9 +26,11 @@ interface Props {
   onClose: () => void;
   active: SettingsTab;
   onChange: (tab: SettingsTab) => void;
+  /** 卡片管理初始化参数：右键「批量编辑」一步直达（进入批量模式并预选卡片） */
+  cardsInit?: { batch?: boolean; selectId?: string } | null;
 }
 
-export function SettingsDrawer({ open, onClose, active, onChange }: Props) {
+export function SettingsDrawer({ open, onClose, active, onChange, cardsInit }: Props) {
   const { isLogin, isAdmin } = useAuth();
 
   const items: MenuProps['items'] = [
@@ -67,7 +69,7 @@ export function SettingsDrawer({ open, onClose, active, onChange }: Props) {
           {active === 'simple' && <SimpleModePanel />}
           {active === 'clock' && <ClockPanel />}
           {active === 'search' && <SearchPanel />}
-          {active === 'cards' && <CardManagerPanel />}
+          {active === 'cards' && <CardManagerPanel initialBatch={cardsInit?.batch} initialSelect={cardsInit?.selectId} />}
           {active === 'sync' && <SyncPanel />}
           {active === 'share' && <SharePanel />}
           {active === 'backup' && <BackupPanel />}
