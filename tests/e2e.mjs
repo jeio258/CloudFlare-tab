@@ -468,6 +468,28 @@ const authHdr = { authorization: token };
   const tok = JSON.parse(stored?.token || '""');
   eq('UI token persisted', typeof tok === 'string' && tok.length > 20, true);
   eq('UI no console errors', consoleErrs.length, 0);
+
+  // B2：极简路径路由（替代 react-router-dom）
+  const b2 = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+  const b2Errs = [];
+  b2.on('pageerror', (e) => b2Errs.push(String(e)));
+  await b2.goto(`${base}/s/__b2_probe__`, { waitUntil: 'domcontentloaded' });
+  await b2.waitForTimeout(1500);
+  eq('B2 /s/* 可渲染', (await b2.locator('body').innerText()).trim().length > 0, true);
+  await b2.goto(`${base}/__b2_unknown__`, { waitUntil: 'domcontentloaded' });
+  await b2.waitForTimeout(1500);
+  eq('B2 未知路径回落首页', (await b2.locator('input[type="search"]').count()) >= 1, true);
+  eq('B2 无未捕获异常', b2Errs.length, 0, b2Errs.join(' | '));
+  await b2.close();
+  // B2：产物 react chunk 不再含 react-router（以 react-router 专有标识 basename 判定）
+  const b2html = await (await api.get(`${base}/`)).text();
+  const reactRef = b2html.match(/\/assets\/react-[A-Za-z0-9._-]+\.js/)?.[0];
+  if (!reactRef) failures.push('B2 react chunk ref not found');
+  else {
+    const js = await (await api.get(base + reactRef)).text();
+    eq('B2 产物不含 react-router', js.includes('basename'), false);
+  }
+
   await page.screenshot({ path: '/tmp/gotab-after-login.png' });
   await browser.close();
 }

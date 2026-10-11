@@ -1,6 +1,5 @@
 // 分享页 /s/:shareId：getShareData 四态（null 无效 / 2 已停止 / 3 不可见 / shareData 渲染）
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
 import { get } from '../api/client';
 import { normalizeCards } from '../lib/normalize';
 import type { HomeCard } from '../api/types';
@@ -18,8 +17,7 @@ const MSG: Record<'invalid' | 'stopped' | 'denied', string> = {
   denied: '主页暂不可见',
 };
 
-export default function SharePage() {
-  const { shareId } = useParams();
+export default function SharePage({ shareId }: { shareId: string }) {
   const [st, setSt] = useState<State>({ code: 'loading' });
 
   useEffect(() => {
