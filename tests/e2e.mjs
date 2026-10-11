@@ -339,6 +339,28 @@ const authHdr = { authorization: token };
   });
   eq('D3 写路径保留 iconColor/color', !!d3kept && d3kept.iconColor === '#ff0000' && d3kept.color === '#00ff00', true);
 
+  // D6：非法卡片 type 在信任边界收敛为 'link'，合法挂件类型保留（写路径往返）
+  await page.evaluate(() => {
+    localStorage.setItem('persist:cards', JSON.stringify([
+      { id: 'd6a', title: 'D6A', subTitle: '', url: 'https://d6a.example.com', type: 'evilWidget' },
+      { id: 'd6b', title: 'D6B', subTitle: '', url: 'https://d6b.example.com', type: 'calendar' },
+      { id: 'd6c', title: 'D6C', subTitle: '', url: 'https://d6c.example.com' },
+    ]));
+  });
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(2500);
+  // 删除 D6C 触发出一次写路径，保留 D6A/D6B
+  await page.locator('[data-card-id="d6c"]').click({ button: 'right' });
+  await page.waitForTimeout(400);
+  await page.locator('[role="menu"] [role="menuitem"]', { hasText: '删除此卡片' }).click();
+  await page.waitForTimeout(600);
+  const d6types = await page.evaluate(() => {
+    const list = JSON.parse(localStorage.getItem('persist:cards') || '[]');
+    return Object.fromEntries(list.map((c) => [c.id, c.type]));
+  });
+  eq('D6 非法 type 收敛为 link', d6types.d6a, 'link');
+  eq('D6 合法挂件 type 保留', d6types.d6b, 'calendar');
+
   // 关闭可能出现的公告通知弹层，避免遮挡头像
   const notifClose = page.locator('.ant-notification-notice-close, .ant-notification-close-icon').first();
   if (await notifClose.count()) {

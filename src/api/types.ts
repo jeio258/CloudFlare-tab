@@ -32,9 +32,12 @@ export interface DefaultData {
 }
 
 // 挂件卡片类型（单一来源：HomeCard.type 与 WidgetCards 的 WidgetType 均引用此处）
-export type WidgetCardType =
-  | 'countdown' | 'countdownAgg' | 'memo' | 'analogClock' | 'digitalClock' | 'calendar' | 'iframe' | 'rmbUpper'
-  | 'weather' | 'hotEvents' | 'exchangeRate' | 'history' | 'bookmarks' | 'settings' | 'disguise';
+// 运行时元组 + 由元组派生的联合类型：既作唯一类型来源，也供信任边界做白名单校验
+export const WIDGET_CARD_TYPES = [
+  'countdown', 'countdownAgg', 'memo', 'analogClock', 'digitalClock', 'calendar', 'iframe', 'rmbUpper',
+  'weather', 'hotEvents', 'exchangeRate', 'history', 'bookmarks', 'settings', 'disguise',
+] as const;
+export type WidgetCardType = (typeof WIDGET_CARD_TYPES)[number];
 
 // 首页卡片（云同步数据形状，对齐参考 user/push 的快照结构）
 export interface HomeCard {
