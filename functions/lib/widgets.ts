@@ -254,8 +254,6 @@ const CITIES: City[] = [
 ];
 
 export const cityOptions = CITIES.map(({ label, value }) => ({ label, value }));
-export const cityCoord = (value: string): City | undefined =>
-  CITIES.find((c) => c.value === value) || CITIES.find((c) => c.label === value);
 
 // 城市名归一化：cf.city 为英文（如 "New York"），转小写去空格后匹配城市表 value
 export function normalizeCityInput(raw: string): string {
