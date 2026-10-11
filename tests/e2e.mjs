@@ -161,12 +161,37 @@ const authHdr = { authorization: token };
   const rStopped = await api.get(`${base}/api/getShareData?path=${shareId}`);
   eq('share off → data 2', (await rStopped.json())?.data, 2);
 
+  // 分享最小投影（D2）：推一份含私有字段的快照，验证只回卡片+背景色，不泄露 memos/私有 settings
+  const SECRET_SETTING = 'SHARE_SECRET_TITLE';
+  const SECRET_MEMO = 'SHARE_SECRET_MEMO';
+  const shareCards = [{ id: 'sh1', title: '分享卡', subTitle: '', url: 'https://share.example.com' }];
+  const baseTs2 = Number((await okJson(await api.get(`${base}/api/user/pullWT`, { headers: authHdr })))?.body?.data?.timestamp) || 0;
+  const pushShare = await api.post(`${base}/api/user/push`, {
+    headers: authHdr,
+    data: {
+      data: { settings: { color: '#123456', tabTitle: SECRET_SETTING }, cards: shareCards, memos: { sh1: SECRET_MEMO } },
+      timestamp: Date.now(),
+      baseTimestamp: baseTs2,
+    },
+  });
+  const pushShareBody = (await okJson(pushShare))?.body;
+  eq('分享快照推送成功', pushShareBody?.code, 200);
+
   const on = await api.post(`${base}/api/user/setShare`, { headers: authHdr, data: { enabled: 1 } });
   eq('setShare on code', (await on.json())?.code, 200);
 
   const rOk = await api.get(`${base}/api/getShareData?path=${shareId}`);
-  const bOk = await rOk.json();
-  eq('share on → shareData 命中', bOk?.data?.shareData?.home?.a, 1);
+  const sd = (await rOk.json())?.data?.shareData || {};
+  eq('share 返回卡片投影', sd?.cards?.[0]?.id, 'sh1');
+  eq('share 返回背景色', sd?.settings?.color, '#123456');
+  eq('share 不泄露 memos', sd?.memos === undefined, true);
+  eq('share 不泄露私有 settings', sd?.settings?.tabTitle === undefined, true);
+
+  // 自清洁：cards:[] 整表重建清空 cards 表，保证本用例可重复运行（不影响后续断言）
+  await api.post(`${base}/api/user/push`, {
+    headers: authHdr,
+    data: { data: { home: { a: 1 }, card: { items: [] }, cards: [] }, timestamp: Number(pushShareBody?.data?.timestamp) + 1, baseTimestamp: Number(pushShareBody?.data?.timestamp) || 0 },
+  });
 
   const rInvalid = await api.get(`${base}/api/getShareData?path=no_such_user_xyz`);
   eq('share 无效路径 → null', (await rInvalid.json())?.data, null);

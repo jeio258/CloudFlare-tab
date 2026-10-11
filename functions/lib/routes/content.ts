@@ -28,6 +28,7 @@ export const getDefaultDataTime = async ({ env }: RouteContext) => {
 };
 
 // 分享页契约：data=对象{shareData} 正常；2=已停止分享；3=无权限；null=无效
+// 最小投影：只公开卡片与背景色，绝不回传整包快照（memos 记事本 / 私有 settings 属用户隐私）
 async function resolveShare(env: Env, path: string) {
   if (!path) return null;
   const user = await getUserByShare(env, path);
@@ -37,7 +38,9 @@ async function resolveShare(env: Env, path: string) {
   const row = await getUserData(env, user.id);
   if (!row) return null;
   try {
-    return { shareData: JSON.parse(row.data) };
+    const full = JSON.parse(row.data) as { cards?: unknown; settings?: { color?: unknown } };
+    const color = typeof full?.settings?.color === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(full.settings.color) ? full.settings.color : '';
+    return { shareData: { cards: Array.isArray(full?.cards) ? full.cards : [], settings: color ? { color } : {} } };
   } catch {
     return null;
   }
