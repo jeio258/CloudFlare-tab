@@ -374,6 +374,23 @@ const authHdr = { authorization: token };
   eq('D6 非法 type 收敛为 link', d6types.d6a, 'link');
   eq('D6 合法挂件 type 保留', d6types.d6b, 'calendar');
 
+  // D11：iframe src 加固（仅 http(s)；同源不放宽沙箱）+ 记事本即时落盘
+  await page.evaluate(() => {
+    localStorage.setItem('persist:cards', JSON.stringify([
+      { id: 'd11bad', title: 'BAD', subTitle: '', url: '', type: 'iframe', config: JSON.stringify({ src: 'javascript:alert(1)' }) },
+      { id: 'd11same', title: 'SAME', subTitle: '', url: '', type: 'iframe', config: JSON.stringify({ src: '/robots.txt' }) },
+      { id: 'd11memo', title: 'Memo', subTitle: '', url: '', type: 'memo' },
+    ]));
+  });
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(2500);
+  eq('D11 iframe 非 http(s) 不渲染', await page.locator('[data-card-id="d11bad"] iframe').count(), 0);
+  const sameSandbox = await page.locator('[data-card-id="d11same"] iframe').getAttribute('sandbox');
+  eq('D11 同源 iframe 不放宽 allow-same-origin', (sameSandbox || '').includes('allow-same-origin'), false);
+  await page.locator('[data-card-id="d11memo"] textarea').fill('即时落盘');
+  await page.waitForTimeout(120);
+  eq('D11 记事本即时落盘', await page.evaluate(() => localStorage.getItem('persist:memo:d11memo')), '即时落盘');
+
   // 关闭可能出现的公告通知弹层，避免遮挡头像
   const notifClose = page.locator('.ant-notification-notice-close, .ant-notification-close-icon').first();
   if (await notifClose.count()) {
