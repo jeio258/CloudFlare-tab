@@ -504,6 +504,12 @@ const authHdr = { authorization: token };
     data: { id: noticeId },
   });
   eq('deleteNotice code', (await okJson(d1)).body?.code, 200);
+  // C2：rejectNotice 与 deleteNotice 等价（端点保留、共用实现）
+  await api.post(`${base}/api/console/addNotice`, { headers: { authorization: token }, data: { title: '驳回用', content: 'x' } });
+  const l2 = await api.get(`${base}/api/console/getNoticeList`, { headers: { authorization: token } });
+  const rejectId = ((await okJson(l2)).body?.data?.list || []).find((n) => n.title === '驳回用')?.id;
+  const rj = await api.post(`${base}/api/console/rejectNotice`, { headers: { authorization: token }, data: { id: rejectId } });
+  eq('rejectNotice 端点可用', (await okJson(rj)).body?.code, 200);
 
   // 默认主页
   const payload = { home: { showMode: 'wallpaper' }, card: { listData: [] } };

@@ -129,12 +129,8 @@ export const confirmNotice = async ({ env, body }: RouteContext) => {
   return null;
 };
 
-export const rejectNotice = async ({ env, body }: RouteContext) => {
-  const id = String(body.id || '');
-  if (!id) throw new ApiError(400, '参数错误');
-  await dbDeleteNotice(env, id);
-  return null;
-};
+// 语义等价：驳回即删除；两端点契约保留，共用同一实现
+export const rejectNotice = deleteNotice;
 
 export const listNotices = async (ctx: RouteContext) => {
   const { page, pageSize } = await readPaging(ctx.request);
