@@ -404,6 +404,20 @@ const authHdr = { authorization: token };
   await page.waitForTimeout(120);
   eq('D11 记事本即时落盘', await page.evaluate(() => localStorage.getItem('persist:memo:d11memo')), '即时落盘');
 
+  // B5：同 URL 去重——天气浮窗 + 天气卡同时挂载只发 1 次 /api/getWeather
+  await page.evaluate(() => {
+    const s = JSON.parse(localStorage.getItem('persist:settings') || '{}');
+    s.showWeather = true;
+    s.immersive = false;
+    localStorage.setItem('persist:settings', JSON.stringify(s));
+    localStorage.setItem('persist:cards', JSON.stringify([{ id: 'b5w', title: 'W', subTitle: '', url: '', type: 'weather' }]));
+  });
+  const wReqs = [];
+  page.on('request', (r) => { if (r.url().includes('/api/getWeather')) wReqs.push(r.url()); });
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(2500);
+  eq('B5 同 URL 天气仅请求一次', wReqs.length, 1);
+
   // 关闭可能出现的公告通知弹层，避免遮挡头像
   const notifClose = page.locator('.ant-notification-notice-close, .ant-notification-close-icon').first();
   if (await notifClose.count()) {
