@@ -1,6 +1,6 @@
 // 管理后台：用户管理 / 公告管理 / 默认主页管理（全部走 console/* API）
 import { useCallback, useEffect, useState } from 'react';
-import { Button, Form, Input, Modal, Popconfirm, Select, Table, Tabs, Tag, message } from 'antd';
+import { Button, Form, Input, Modal, Select, Table, Tabs, Tag, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useAuth } from '../../store/auth';
 import { get, post } from '../../api/client';
@@ -99,11 +99,9 @@ function UserTab() {
           <Button size="small" type="link" onClick={() => act(r.status === 1 ? '/api/console/disableUser' : '/api/console/enableUser', { userId: r.id }, r.status === 1 ? '已禁用' : '已启用')}>
             {r.status === 1 ? '禁用' : '启用'}
           </Button>
-          <Popconfirm title="确认删除该用户？将级联删除其云数据" onConfirm={() => act('/api/console/deleteUser', { userId: r.id }, '已删除')}>
-            <Button size="small" type="link" danger>
-              删除
-            </Button>
-          </Popconfirm>
+          <Button size="small" type="link" danger onClick={() => { if (confirm('确认删除该用户？将级联删除其云数据')) act('/api/console/deleteUser', { userId: r.id }, '已删除'); }}>
+            删除
+          </Button>
         </span>
       ),
     },
@@ -210,11 +208,9 @@ function NoticeTab() {
           <Button size="small" type="link" onClick={() => { setEditing(r); setOpen(true); }}>
             编辑
           </Button>
-          <Popconfirm title="确认删除该公告？" onConfirm={() => act('/api/console/deleteNotice', { id: r.id }, '已删除')}>
-            <Button size="small" type="link" danger>
-              删除
-            </Button>
-          </Popconfirm>
+          <Button size="small" type="link" danger onClick={() => { if (confirm('确认删除该公告？')) act('/api/console/deleteNotice', { id: r.id }, '已删除'); }}>
+            删除
+          </Button>
         </span>
       ),
     },
@@ -315,11 +311,9 @@ function DefaultTab() {
               停用
             </Button>
           )}
-          <Popconfirm title="确认删除该历史快照？" onConfirm={() => act('/api/console/deleteDefaultData', { id: r.id }, '已删除')}>
-            <Button size="small" type="link" danger>
-              删除
-            </Button>
-          </Popconfirm>
+          <Button size="small" type="link" danger onClick={() => { if (confirm('确认删除该历史快照？')) act('/api/console/deleteDefaultData', { id: r.id }, '已删除'); }}>
+            删除
+          </Button>
         </span>
       ),
     },

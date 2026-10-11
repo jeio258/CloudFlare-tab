@@ -1,5 +1,6 @@
 // 迁移备份：整包导出/导入（与云快照同构 {settings, cards}）
-import { Button, Divider, Upload, message } from 'antd';
+import { useRef } from 'react';
+import { Button, Divider, message } from 'antd';
 import { DownloadOutlined, UploadOutlined } from '@ant-design/icons';
 import { useSite } from '../../../store/site';
 import { DEFAULT_SETTINGS } from '../../../store/settings';
@@ -7,6 +8,7 @@ import { normalizeCards, normalizeSettings } from '../../../lib/normalize';
 
 export function BackupPanel() {
   const { settings, updateSettings, cards, setCards } = useSite();
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const exportBackup = () => {
     const payload = {
@@ -57,17 +59,18 @@ export function BackupPanel() {
       <div>
         <div className="mb-2 text-sm font-semibold">导入还原</div>
         <div className="mb-2 text-xs text-gray-400">选择此前导出的备份文件，导入前会确认覆盖。</div>
-        <Upload
+        <input
+          ref={fileRef}
+          type="file"
           accept=".json"
-          maxCount={1}
-          showUploadList={false}
-          beforeUpload={(f) => {
-            importBackup(f as File);
-            return false;
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) importBackup(f);
+            if (fileRef.current) fileRef.current.value = '';
           }}
-        >
-          <Button icon={<UploadOutlined />}>选择备份文件</Button>
-        </Upload>
+        />
+        <Button icon={<UploadOutlined />} onClick={() => fileRef.current?.click()}>选择备份文件</Button>
       </div>
     </div>
   );

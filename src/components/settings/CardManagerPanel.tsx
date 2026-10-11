@@ -1,6 +1,6 @@
 // 卡片管理面板：分组分区列表 + 编辑弹窗（对齐上游 addorEditCardForm 弹窗形式） + 书签导入 + 分组管理 + 批量调整
-import { useState } from 'react';
-import { Button, Checkbox, Input, InputNumber, Select, message, Upload } from 'antd';
+import { useRef, useState } from 'react';
+import { Button, Checkbox, Input, InputNumber, Select, message } from 'antd';
 import {
   PlusOutlined, DeleteOutlined, EditOutlined, ArrowUpOutlined, ArrowDownOutlined,
   ImportOutlined, CheckOutlined,
@@ -33,6 +33,7 @@ async function fetchIconsBatch(targets: { id: string; url: string }[], apply: (i
 export function CardManagerPanel({ initialBatch = false, initialSelect }: { initialBatch?: boolean; initialSelect?: string } = {}) {
   const { cards, setCards, settings, updateSettings } = useSite();
   const groups = settings.cardGroups || [];
+  const fileRef = useRef<HTMLInputElement>(null);
   // 编辑弹窗（对齐上游弹出式弹窗卡片交互）
   const [editTarget, setEditTarget] = useState<string | 'new' | null>(null);
   const [imported, setImported] = useState(0);
@@ -288,19 +289,20 @@ export function CardManagerPanel({ initialBatch = false, initialSelect }: { init
       <div>
         <div className="mb-1 text-sm font-semibold">导入书签</div>
         <div className="text-xs text-gray-400">支持 Chrome / Firefox / Safari 导出的 HTML 或 JSON 书签文件，按链接去重后加入卡片；标题最长 50 字符，超出自动截断</div>
-        <Upload
+        <input
+          ref={fileRef}
+          type="file"
           accept=".html,.htm,.json"
-          maxCount={1}
-          showUploadList={false}
-          beforeUpload={(f) => {
-            onImport(f as File);
-            return false;
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) onImport(f);
+            if (fileRef.current) fileRef.current.value = '';
           }}
-        >
-          <Button size="small" icon={<ImportOutlined />}>
-            选择书签文件
-          </Button>
-        </Upload>
+        />
+        <Button size="small" icon={<ImportOutlined />} onClick={() => fileRef.current?.click()}>
+          选择书签文件
+        </Button>
       </div>
 
       {/* 分组管理 */}
