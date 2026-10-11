@@ -1,0 +1,8 @@
+{
+  "manifest_version": 3,
+  "name": "CloudFlare-tab 新标签页",
+  "version": "1.0.0",
+  "description": "把浏览器新标签页替换为 CloudFlare-tab 起始页",
+  "chrome_url_overrides": { "newtab": "newtab.html" },
+  "host_permissions": ["https://vab.994613.xyz/*"]
+}
