@@ -3,7 +3,7 @@ import { ApiError, bytesOf, MAX_DATA_BYTES } from '../core';
 import type { RouteContext } from '../core';
 import { toUserInfo } from '../contract';
 import {
-  USERNAME_RE, validPassword,
+  USERNAME_RE, PHONE_RE, validPassword,
   createToken, verifyPassword, hashPassword, newId,
 } from '../auth';
 import { checkAuthRateLimit, recordAuthRateLimit } from '../ratelimit';
@@ -107,7 +107,7 @@ export const editUserInfo = async ({ env, user, body }: RouteContext) => {
 
   if (!USERNAME_RE.test(username)) throw new ApiError(400, '用户名需字母开头、3-20 位字母数字_-');
   if (nickname.length > 20) throw new ApiError(400, '昵称不能超过 20 个字符');
-  if (phone && !/^1[3-9]\d{9}$/.test(phone)) throw new ApiError(400, '手机号格式不正确');
+  if (phone && !PHONE_RE.test(phone)) throw new ApiError(400, '手机号格式不正确');
   if (sex !== 0 && sex !== 1) throw new ApiError(400, '性别参数不正确');
 
   if (username !== user!.username) {

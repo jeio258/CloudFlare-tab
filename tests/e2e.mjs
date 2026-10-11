@@ -82,6 +82,12 @@ const cleanupUsers = [];
   eq('editUserInfo code', b4?.code, 200);
   eq('editUserInfo nickname', b4?.data?.nickname, '昵称');
   eq('editUserInfo sex', b4?.data?.sex, 1);
+  // C1：手机号校验（复用 PHONE_RE）——非法格式被拒
+  const rBadPhone = await api.post(`${base}/api/user/editUserInfo`, {
+    headers: { authorization: ntoken },
+    data: { username: uname, phone: '123' },
+  });
+  eq('editUserInfo 非法手机号被拒', (await okJson(rBadPhone)).body?.code, 400);
   // 找回密码（无邮箱/验证码：用户名+原密码+新密码）
   const r5bad = await api.post(`${base}/api/findPassword`, {
     data: { username: uname, newPassword: 'newpass1', confirmPassword: 'newpass1' },

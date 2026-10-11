@@ -1,7 +1,7 @@
 // 管理后台路由：用户管理 / 公告管理 / 默认主页管理（全部 admin 鉴权）
 import { ApiError, bytesOf, MAX_DATA_BYTES } from '../core';
 import type { RouteContext } from '../core';
-import { USERNAME_RE, validPassword, hashPassword, newId } from '../auth';
+import { USERNAME_RE, PHONE_RE, validPassword, hashPassword, newId } from '../auth';
 import {
   getUserByUsername, insertUser, setUserType as dbSetUserType, setUserStatus, deleteUserCascade,
   insertNotice, updateNotice, deleteNotice as dbDeleteNotice, getNoticeById, publishNotice,
@@ -29,7 +29,7 @@ export const addUser = async ({ env, body }: RouteContext) => {
 
   if (!USERNAME_RE.test(username)) throw new ApiError(400, '用户名需字母开头、3-20 位字母数字_-');
   if (!validPassword(password)) throw new ApiError(400, '密码长度需在 6-32 位之间');
-  if (phone && !/^1[3-9]\d{9}$/.test(phone)) throw new ApiError(400, '手机号格式不正确');
+  if (phone && !PHONE_RE.test(phone)) throw new ApiError(400, '手机号格式不正确');
   if (await getUserByUsername(env, username)) throw new ApiError(400, '用户名已存在');
 
   await insertUser(env, {
