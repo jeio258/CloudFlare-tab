@@ -31,6 +31,10 @@ const cleanupUsers = [];
     const rr = await api.get(base + m[1]);
     eq('asset 200', rr.status(), 200);
   } else failures.push('asset ref not found');
+  // D12：/fonts/* 应有长缓存（否则每次加载字体都回源）
+  const rf = await api.get(`${base}/fonts/roboto.woff`);
+  const fontCC = rf.headers()['cache-control'] || '';
+  eq('fonts 长缓存 immutable(D12)', /max-age=31536000/.test(fontCC) && /immutable/.test(fontCC), true);
   const r404 = await api.get(`${base}/api/does-not-exist`);
   const { status, body } = await okJson(r404);
   eq('catch-all 200', status, 200);
