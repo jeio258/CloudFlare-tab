@@ -100,7 +100,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   wallpaperSlideshow: false,
   wallpaperUrls: '',
   wallpaperInterval: 60,
-  colorMode: 'wallpaper',
+  colorMode: 'color',
   gradientFrom: '#1e3c72',
   gradientTo: '#2a5298',
   color: '#12151a',

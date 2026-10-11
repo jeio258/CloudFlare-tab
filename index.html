@@ -9,7 +9,7 @@
   <title>CloudFlare-tab</title>
   <meta name="description" content="CloudFlare-tab 新标签页" />
   <meta name="keywords" content="cloudflare-tab,新标签页,导航,起始页" />
-  <link rel="preload" as="image" href="/images/wallpaper.webp" fetchpriority="high" />
+  <!-- 默认纯色背景，不再预载内置壁纸（用户切到壁纸模式时经 CSS 正常加载） -->
   <!-- 字体预载：消除 CSS→font 串行往返（webfont 未载前文本不计 LCP） -->
   <link rel="preload" as="font" type="font/woff" href="/fonts/roboto.woff" crossorigin />
   <link rel="preload" as="font" type="font/woff" href="/fonts/roboto_bold.woff" crossorigin />

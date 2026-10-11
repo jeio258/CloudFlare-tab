@@ -339,9 +339,13 @@ const authHdr = { authorization: token };
   const consoleErrs = [];
   page.on('pageerror', (e) => consoleErrs.push(String(e)));
   page.on('console', (m) => { if (m.type() === 'error') consoleErrs.push(m.text()); });
+  const wpReqs = [];
+  page.on('request', (r) => { if (r.url().includes('/images/wallpaper')) wpReqs.push(r.url()); });
 
   await page.goto(base, { waitUntil: 'domcontentloaded', timeout: 30000 });
   await page.waitForTimeout(5000);
+  // 默认纯色背景：首屏不应请求内置壁纸
+  eq('默认不加载内置壁纸（纯色）', wpReqs.length, 0);
 
   // 图标默认头像：未登录时右上角头像应为 /favicon.ico
   eq('默认头像使用 /favicon.ico', await page.locator('button[aria-label="用户入口"] img[src="/favicon.ico"]').count(), 1);
