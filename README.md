@@ -63,7 +63,7 @@ npm run deploy:workers
    - Workers：Create application → Workers → Connect to Git → 选仓库 → 分支 `master`（Workers Builds）
 3. **构建设置**：
    - Build command：`npm ci && npm run build:cloud`（构建 + 自动执行 D1 远端迁移）
-   - Pages 输出目录：`dist`；Workers：Deploy command 填 `npx wrangler deploy -c wrangler.workers.toml`
+   - Pages 输出目录：`dist`；Workers：Deploy command 填 `rm -rf dist/functions && npx wrangler deploy -c wrangler.workers.toml`（Workers 资产会原样托管 `dist`，须先剔除 `functions/` 以免服务端源码被静态暴露）
    - Root directory：留空（仓库根即项目根）
 4. **环境变量/绑定**：D1 绑定 `DB`（database_id 需已回填对应 wrangler 配置）、Secret `JWT_SECRET`
 5. Save and Deploy → 首次部署完成
