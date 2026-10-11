@@ -317,6 +317,28 @@ const authHdr = { authorization: token };
 
   await page.goto(base, { waitUntil: 'domcontentloaded', timeout: 30000 });
   await page.waitForTimeout(5000);
+
+  // D3：iconColor/color 不得在信任边界被净化丢弃（本地写路径往返）
+  page.on('dialog', (d) => d.accept());
+  await page.evaluate(() => {
+    localStorage.setItem('persist:cards', JSON.stringify([
+      { id: 'd3a', title: 'D3A', subTitle: '', url: 'https://d3a.example.com' },
+      { id: 'd3b', title: 'D3B', subTitle: '', url: 'https://d3b.example.com', iconColor: '#ff0000', color: '#00ff00' },
+    ]));
+  });
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(2500);
+  // 右键删除 D3A（触发 setCards→saveCards 写路径），保留带字段的 D3B
+  await page.locator('[data-card-id="d3a"]').click({ button: 'right' });
+  await page.waitForTimeout(400);
+  await page.locator('[role="menu"] [role="menuitem"]', { hasText: '删除此卡片' }).click();
+  await page.waitForTimeout(600);
+  const d3kept = await page.evaluate(() => {
+    const list = JSON.parse(localStorage.getItem('persist:cards') || '[]');
+    return list.find((c) => c.id === 'd3b') || null;
+  });
+  eq('D3 写路径保留 iconColor/color', !!d3kept && d3kept.iconColor === '#ff0000' && d3kept.color === '#00ff00', true);
+
   // 关闭可能出现的公告通知弹层，避免遮挡头像
   const notifClose = page.locator('.ant-notification-notice-close, .ant-notification-close-icon').first();
   if (await notifClose.count()) {

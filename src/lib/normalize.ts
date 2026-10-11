@@ -34,6 +34,9 @@ export function normalizeCard(raw: unknown): HomeCard {
     fontSize: typeof r.fontSize === 'number' && r.fontSize >= 9 && r.fontSize <= 32 ? r.fontSize : undefined,
     fontColor: color(r.fontColor),
     bgColor: color(r.bgColor),
+    // iconColor/color 为卡表既有字段（db.ts 双向映射），此前在信任边界被丢弃致同步/导入往返丢失
+    iconColor: color(r.iconColor),
+    color: color(r.color),
   };
 }
 
