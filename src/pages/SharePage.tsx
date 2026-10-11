@@ -80,13 +80,13 @@ export default function SharePage() {
                 className="relative flex h-16 w-40 items-center overflow-hidden rounded-[18px] bg-white shadow-card transition-transform duration-300 hover:-translate-y-0.5"
               >
                 <img
-                  src={c.icon || '/icons/logo.svg'}
+                  src={c.icon || '/favicon.ico'}
                   alt=""
                   aria-hidden
                   className="pointer-events-none absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 object-contain opacity-10"
                 />
                 <div className="relative z-10 flex items-center gap-2 px-4">
-                  <img src={c.icon || '/icons/logo.svg'} alt="" className="h-10 w-10 shrink-0 object-contain" />
+                  <img src={c.icon || '/favicon.ico'} alt="" className="h-10 w-10 shrink-0 object-contain" />
                   <div className="min-w-0">
                     <div className="line-clamp-1 text-sm font-semibold text-ink">{c.title}</div>
                     <div className="line-clamp-1 text-sm font-medium text-muted">{c.subTitle}</div>

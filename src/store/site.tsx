@@ -116,7 +116,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
   // 浏览器标签页标题/图标即时同步（用户自定义，空值回落默认）
   useEffect(() => {
     document.title = settings.tabTitle || 'CloudFlare-tab';
-    const DEFAULT_ICON = '/icons/logo.png';
+    const DEFAULT_ICON = '/favicon.ico';
     let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
     const href = settings.tabIcon || DEFAULT_ICON;
     if (!link) {

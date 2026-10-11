@@ -404,9 +404,9 @@ export function renderWidget(type: WidgetType, id: string, config: Record<string
     case 'hotEvents': return <HotMini />;
     case 'exchangeRate': return <FxMini />;
     case 'history': return <HistoryMini />;
-    case 'bookmarks': return <ActionMini icon="/icons/logo.svg" label="书签管理" onClick={() => widgetCtx.openCards()} />;
-    case 'settings': return <ActionMini icon="/icons/logo.svg" label="设置中心" onClick={() => widgetCtx.openSettings()} />;
-    case 'disguise': return <ActionMini icon="/icons/logo.svg" label="伪装助手" onClick={() => window.dispatchEvent(new CustomEvent('cftab:disguise-toggle'))} />;
+    case 'bookmarks': return <ActionMini icon="/favicon.ico" label="书签管理" onClick={() => widgetCtx.openCards()} />;
+    case 'settings': return <ActionMini icon="/favicon.ico" label="设置中心" onClick={() => widgetCtx.openSettings()} />;
+    case 'disguise': return <ActionMini icon="/favicon.ico" label="伪装助手" onClick={() => window.dispatchEvent(new CustomEvent('cftab:disguise-toggle'))} />;
     default: return null;
   }
 }

@@ -35,6 +35,10 @@ const cleanupUsers = [];
   const rf = await api.get(`${base}/fonts/roboto.woff`);
   const fontCC = rf.headers()['cache-control'] || '';
   eq('fonts 长缓存 immutable(D12)', /max-age=31536000/.test(fontCC) && /immutable/.test(fontCC), true);
+  // 图标：/favicon.ico 可访问，且页面 link 指向它
+  const rfav = await api.get(`${base}/favicon.ico`);
+  eq('favicon.ico 200', rfav.status(), 200);
+  eq('favicon link 指向 /favicon.ico', /<link[^>]+rel="icon"[^>]+href="\/favicon\.ico"/.test(html), true);
   const r404 = await api.get(`${base}/api/does-not-exist`);
   const { status, body } = await okJson(r404);
   eq('catch-all 200', status, 200);
@@ -330,6 +334,9 @@ const authHdr = { authorization: token };
 
   await page.goto(base, { waitUntil: 'domcontentloaded', timeout: 30000 });
   await page.waitForTimeout(5000);
+
+  // 图标默认头像：未登录时右上角头像应为 /favicon.ico
+  eq('默认头像使用 /favicon.ico', await page.locator('button[aria-label="用户入口"] img[src="/favicon.ico"]').count(), 1);
 
   // D3：iconColor/color 不得在信任边界被净化丢弃（本地写路径往返）
   page.on('dialog', (d) => d.accept());

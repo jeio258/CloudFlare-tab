@@ -5,7 +5,7 @@ export function AboutPanel() {
   return (
     <div className="space-y-3 text-sm leading-6">
       <div className="flex items-center gap-2">
-        <img src="/icons/logo.svg" alt="logo" className="h-10 w-10" />
+        <img src="/favicon.ico" alt="logo" className="h-10 w-10" />
         <div>
           <div className="font-semibold">CloudFlare-tab</div>
           <div className="text-xs text-gray-500">CloudFlare-tab 新标签页</div>
