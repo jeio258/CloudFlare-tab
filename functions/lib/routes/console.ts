@@ -1,5 +1,5 @@
 // 管理后台路由：用户管理 / 公告管理 / 默认主页管理（全部 admin 鉴权）
-import { ApiError } from '../core';
+import { ApiError, bytesOf, MAX_DATA_BYTES } from '../core';
 import type { RouteContext } from '../core';
 import { USERNAME_RE, validPassword, hashPassword, newId } from '../auth';
 import {
@@ -156,7 +156,7 @@ export const setDefaultData = async ({ env, admin, body }: RouteContext) => {
   if (data === undefined || data === null) throw new ApiError(400, '参数错误');
   const now = new Date().toISOString();
   const dataJson = JSON.stringify(data);
-  if (dataJson.length > 262144) throw new ApiError(400, '数据过大，无法保存');
+  if (bytesOf(dataJson) > MAX_DATA_BYTES) throw new ApiError(400, '数据过大，无法保存');
   const db = env.DB;
   await db.batch([
     db

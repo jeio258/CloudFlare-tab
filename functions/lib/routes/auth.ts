@@ -1,5 +1,5 @@
 // 认证相关路由：登录 / 注册
-import { ApiError } from '../core';
+import { ApiError, bytesOf, MAX_DATA_BYTES } from '../core';
 import type { RouteContext } from '../core';
 import { toUserInfo } from '../contract';
 import {
@@ -120,8 +120,6 @@ export const editUserInfo = async ({ env, user, body }: RouteContext) => {
 };
 
 // —— 云同步 ——
-const MAX_DATA_BYTES = 262144;
-
 export const push = async ({ env, user, body }: RouteContext) => {
   const data = body.data;
   const timestamp = Number(body.timestamp);
@@ -130,7 +128,7 @@ export const push = async ({ env, user, body }: RouteContext) => {
     throw new ApiError(400, '参数错误');
   }
   const payload = JSON.stringify(data);
-  if (payload.length > MAX_DATA_BYTES) throw new ApiError(400, '数据过大，无法保存');
+  if (bytesOf(payload) > MAX_DATA_BYTES) throw new ApiError(400, '数据过大，无法保存');
 
   const row = await getUserData(env, user!.id);
   const stored = row ? Number(row.timestamp) : 0;

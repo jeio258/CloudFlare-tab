@@ -128,6 +128,14 @@ const authHdr = { authorization: token };
   const { body: bBig } = await okJson(rBig);
   eq('push 超大数据被拒', bBig?.code, 400);
 
+  // D7：体积按 UTF-8 字节计——100000 个中文≈300KB 字节（>256KB），但字符数仅约 10 万，不得绕过上限
+  const rBigMb = await api.post(`${base}/api/user/push`, {
+    headers: authHdr,
+    data: { data: { blob: '中'.repeat(100000) }, timestamp: ts1 + 6, baseTimestamp: 0 },
+  });
+  const { body: bBigMb } = await okJson(rBigMb);
+  eq('push 多字节超限被拒(按字节)', bBigMb?.code, 400);
+
   // 冲突：baseTimestamp 取一个肯定小于已存的数
   const r3 = await api.post(`${base}/api/user/push`, {
     headers: authHdr,

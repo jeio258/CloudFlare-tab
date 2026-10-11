@@ -34,6 +34,10 @@ export function json(status: number, body: unknown): Response {
 export const ok = (data: unknown, msg = 'ok') => json(200, { code: 200, msg, data });
 export const fail = (code: number, msg: string) => json(200, { code, msg, data: null });
 
+// 快照体积上限（字节）：以 UTF-8 字节计，避免中文等多字节字符按字符数绕过校验
+export const MAX_DATA_BYTES = 262144;
+export const bytesOf = (s: string) => new TextEncoder().encode(s).byteLength;
+
 // 业务错误：默认映射为 HTTP 200 + {code,msg}（前端契约）；httpStatus 显式指定时用真实状态码（如 409）
 export class ApiError extends Error {
   constructor(
