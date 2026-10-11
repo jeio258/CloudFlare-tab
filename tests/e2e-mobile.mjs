@@ -75,6 +75,23 @@ eq('长按弹出操作菜单', menuShown, true);
 await page.keyboard.press('Escape');
 await page.mouse.click(187, 790);
 
+// 7b. D5：长按途中发生重渲染后抬手，不得误弹菜单（长按定时器须跨渲染稳定）
+await page.locator('[data-card-id="mv3"]').evaluate((el) => {
+  const t = new Touch({ identifier: 2, target: el, clientX: 60, clientY: 400 });
+  el.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, cancelable: true, touches: [t] }));
+});
+// 立即触发 HomePage/CardDeck 重渲染（点开设置抽屉），并在 500ms 内抬指
+await page.locator('button[aria-label="用户入口"]').dispatchEvent('click');
+await page.waitForTimeout(40);
+await page.locator('[data-card-id="mv3"]').evaluate((el) => {
+  el.dispatchEvent(new TouchEvent('touchend', { bubbles: true, cancelable: true, touches: [] }));
+});
+await page.waitForTimeout(700);
+const misfire = await page.locator('text=批量编辑').count();
+eq('D5 重渲染后抬手不误弹菜单', misfire, 0);
+await page.keyboard.press('Escape'); // 关闭抽屉，恢复后续步骤前置状态
+await page.waitForTimeout(500);
+
 // 8. 图标按钮热区 ≥40
 const tb = await page.locator('button[aria-label*="沉浸"]').boundingBox();
 eq('四方块按钮热区≥40', Math.min(tb?.width || 0, tb?.height || 0) >= 40, true);

@@ -22,6 +22,38 @@ const AddIcon = () => (
   </svg>
 );
 
+// 移动端长按 500ms 触发 contextmenu（触屏无右键，长按唤出卡片菜单）
+// 定时器登记表置于模块级：若放在组件体内，每次渲染都会重建 WeakMap，
+// 长按途中一旦发生重渲染，抬手时的 clear 将在新表里找不到句柄而漏清 → 误弹菜单
+const lpTimers = new WeakMap<HTMLElement, number>();
+
+function withLongPress(node: ReactElement): ReactElement {
+  const clear = (el: EventTarget | null) => {
+    if (!(el instanceof HTMLElement)) return;
+    const h = lpTimers.get(el);
+    if (h) {
+      window.clearTimeout(h);
+      lpTimers.delete(el);
+    }
+  };
+  return cloneElement(node, {
+    onTouchStart: (e: React.TouchEvent) => {
+      const t = e.touches[0];
+      const el = e.currentTarget as HTMLElement;
+      clear(el);
+      lpTimers.set(
+        el,
+        window.setTimeout(() => {
+          lpTimers.delete(el);
+          el.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: t.clientX, clientY: t.clientY }));
+        }, 500)
+      );
+    },
+    onTouchEnd: (e: React.TouchEvent) => clear(e.currentTarget),
+    onTouchMove: (e: React.TouchEvent) => clear(e.currentTarget),
+  });
+}
+
 export default function CardDeck({ cards, groups = [], onAddCard, onOpenCards, onEditCard, onOpenSettings }: Props) {
   // A8 动作卡上下文（书签管理/设置中心）
   useEffect(() => {
@@ -203,36 +235,6 @@ export default function CardDeck({ cards, groups = [], onAddCard, onOpenCards, o
     }
     return renderWidget(c.type as WidgetType, c.id, config, compact);
   };
-
-// 移动端长按 500ms 触发 contextmenu（触屏无右键，长按唤出卡片菜单）
-const lpTimers = new WeakMap<HTMLElement, number>();
-
-function withLongPress(node: ReactElement): ReactElement {
-  const clear = (el: EventTarget | null) => {
-    if (!(el instanceof HTMLElement)) return;
-    const h = lpTimers.get(el);
-    if (h) {
-      window.clearTimeout(h);
-      lpTimers.delete(el);
-    }
-  };
-  return cloneElement(node, {
-    onTouchStart: (e: React.TouchEvent) => {
-      const t = e.touches[0];
-      const el = e.currentTarget as HTMLElement;
-      clear(el);
-      lpTimers.set(
-        el,
-        window.setTimeout(() => {
-          lpTimers.delete(el);
-          el.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: t.clientX, clientY: t.clientY }));
-        }, 500)
-      );
-    },
-    onTouchEnd: (e: React.TouchEvent) => clear(e.currentTarget),
-    onTouchMove: (e: React.TouchEvent) => clear(e.currentTarget),
-  });
-}
 
   // 右键/长按菜单（批量编辑/编辑/复制链接/换位/删除）：自绘菜单（P1-3 去 antd Dropdown），固定定位+视口内钳位
   interface CtxMenuState { x: number; y: number; card: HomeCard; idxShown: number }
