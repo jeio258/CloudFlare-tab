@@ -26,6 +26,8 @@ const cleanupUsers = [];
   const html = await r.text();
   eq('home <title>', html.match(/<title>([^<]*)<\/title>/)?.[1], 'CloudFlare-tab');
   eq('home http 200', r.status(), 200);
+  // 首屏加载骨架：存在则 FCP 不必等 JS 挂载
+  eq('首屏加载骨架存在', html.includes('正在加载'), true);
   const m = html.match(/src="(\/assets\/index-[^"]+\.js)"/);
   if (m) {
     const rr = await api.get(base + m[1]);

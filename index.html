@@ -19,7 +19,10 @@
 </head>
 
 <body>
-  <div id="root"></div>
+  <div id="root">
+    <!-- 首屏加载骨架：让 FCP 不再等待 JS 挂载（React 挂载后整段替换） -->
+    <div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.7);font:500 14px/1 -apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;">正在加载…</div>
+  </div>
   <noscript>
     <div style="padding:40px 24px;text-align:center;color:#fff;font-family:system-ui,sans-serif;line-height:1.6;">
       CloudFlare-tab 需要启用 JavaScript 才能使用，请在浏览器设置中开启后刷新页面。

@@ -13,8 +13,3 @@
   src: url('/fonts/roboto_bold.woff');
   font-display: swap;
 }
-@font-face {
-  font-family: digi;
-  src: url('/fonts/digi.woff');
-  font-display: swap;
-}
