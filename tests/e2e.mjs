@@ -116,7 +116,8 @@ const authHdr = { authorization: token };
   const stored = b1?.data?.data || null;
 
   const ts1 = Math.max(Date.now(), baseTs + 1);
-  const data1 = { home: { a: 1 }, card: { items: [] } };
+  // 含 cards:[] 以便每次运行清空 cards 行表，保证本用例可重复运行
+  const data1 = { home: { a: 1 }, card: { items: [] }, cards: [] };
   const r2 = await api.post(`${base}/api/user/push`, {
     headers: authHdr,
     data: { data: data1, timestamp: ts1, baseTimestamp: baseTs },
@@ -391,6 +392,30 @@ const authHdr = { authorization: token };
   ]);
   eq('UI login http', loginResp.status(), 200);
   await page.waitForTimeout(1500);
+
+  // D8：memos-only 拉取不得残留 skipAuto 而误吞后续用户改动的自动推送
+  // 0) 等登录触发的自动推送（2s 防抖）落定，否则它会把本地 settings/cards 推上云，破坏后续前提
+  await page.waitForTimeout(2600);
+  // 1) 造一份「仅 memos + cards:[]」云快照（无 settings → 拉取不改动本地 settings/cards；cards:[] 清空行表）
+  const d8base = Number((await okJson(await api.get(`${base}/api/user/pullWT`, { headers: { authorization: token } })))?.body?.data?.timestamp) || 0;
+  const d8seed = await api.post(`${base}/api/user/push`, {
+    headers: { authorization: token },
+    data: { data: { memos: { d8: 'x' }, cards: [] }, timestamp: Date.now(), baseTimestamp: d8base },
+  });
+  eq('D8 造 memos 快照', (await okJson(d8seed))?.body?.code, 200);
+  // 2) 抽屉内切「数据同步」→ 点击「拉取云端」（markSkip=true 的 pull 路径）
+  await page.locator('.ant-drawer .ant-menu-item', { hasText: '数据同步' }).click();
+  await page.waitForTimeout(500);
+  await page.locator('.ant-drawer button', { hasText: '拉取云端' }).click();
+  await page.waitForTimeout(1200);
+  // 3) 切「主界面」切换开关（触发用户改动）→ 新实现应自动推送；旧实现因 skipAuto 残留被吞
+  await page.locator('.ant-drawer .ant-menu-item', { hasText: '主界面' }).click();
+  await page.waitForTimeout(400);
+  const d8pushReq = page.waitForRequest((r) => r.url().endsWith('/api/user/push') && r.method() === 'POST', { timeout: 6000 });
+  await page.locator('.ant-drawer .ant-switch').last().click();
+  const d8pushed = await d8pushReq.then(() => true).catch(() => false);
+  eq('D8 拉取后用户改动仍触发自动推送', d8pushed, true);
+
   const stored = await page.evaluate(() => {
     const raw = localStorage.getItem('persist:user');
     if (!raw) return null;

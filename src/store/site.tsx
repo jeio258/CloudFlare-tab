@@ -147,27 +147,27 @@ export function SiteProvider({ children }: { children: ReactNode }) {
   // 登录后变更自动推送云端（autoSync 开关）：设置/卡片变更后 debounce 2s；拉取/同步中跳过防循环
   const autoTimer = useRef<number | null>(null);
   const skipAuto = useRef(false);
+  // syncState 经 ref 读取：若纳入 effect deps，会在每次同步状态变化时重排推送而自激
+  const syncStateRef = useRef(syncState);
+  syncStateRef.current = syncState;
 
-  // 云快照落地（pull 两处共用）：markSkip=true 时抑制随后的 autoSync 推送（防拉取触发推送循环）
+  // 云快照落地（pull 两处共用）：markSkip 时抑制随后的 autoSync 推送（防拉取触发推送循环）
+  // skipAuto 仅在「本次确实改动 settings/cards（也即会触发推送 effect）」时置位；
+  // 旧实现对 memos 也置位，而 memos 不改变 effect deps → 标记残留，会误吞下一次用户改动的推送
   const applyPull = useCallback(
     (snapshot: Snapshot, timestamp: number, markSkip: boolean) => {
       const clean = applySnapshotClean(snapshot);
+      const replaceCards = !!(clean.cards && clean.cards.length);
+      if (markSkip && (clean.settings || replaceCards)) skipAuto.current = true;
       if (clean.settings) {
-        if (markSkip) skipAuto.current = true;
         setSettings((p) => {
           const next = { ...p, ...clean.settings };
           saveSettings(next);
           return next;
         });
       }
-      if (clean.cards && clean.cards.length) {
-        if (markSkip) skipAuto.current = true;
-        persistSetCards(clean.cards);
-      }
-      if (snapshot.memos) {
-        if (markSkip) skipAuto.current = true;
-        restoreMemos(normalizeMemos(snapshot.memos));
-      }
+      if (replaceCards) persistSetCards(clean.cards!);
+      if (snapshot.memos) restoreMemos(normalizeMemos(snapshot.memos));
       setCloudTime(timestamp);
       setSyncMsg('已拉取云端数据');
       setSyncState('pulled');
@@ -231,7 +231,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
       skipAuto.current = false;
       return;
     }
-    if (syncState === 'syncing') return;
+    if (syncStateRef.current === 'syncing') return;
     if (autoTimer.current) window.clearTimeout(autoTimer.current);
     autoTimer.current = window.setTimeout(() => {
       push();
@@ -239,7 +239,8 @@ export function SiteProvider({ children }: { children: ReactNode }) {
     return () => {
       if (autoTimer.current) window.clearTimeout(autoTimer.current);
     };
-  }, [settings, cards, isLogin, token, settings.autoSync]);
+    // settings 已含 autoSync；syncState 经 ref 读取，不纳入 deps（避免同步状态变化自激重排）
+  }, [settings, cards, isLogin, token]);
 
   const value = useMemo<SiteStore>(
     () => ({ settings, updateSettings, resetSettings, cards, setCards: persistSetCards, syncState, syncMsg, pull, push, cloudTime }),
