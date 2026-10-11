@@ -440,6 +440,19 @@ const authHdr = { authorization: token };
   const dhl = await api.get(`${base}/api/console/getDefaultDataList`, { headers: { authorization: token } });
   const dhlb = (await okJson(dhl)).body;
   eq('默认主页历史列表≥1', Array.isArray(dhlb?.data?.list) && dhlb.data.list.length >= 1, true);
+
+  // D1：清理历史应「保留最新」，而非删除最新（旧实现方向相反）
+  const tagOf = (r) => { try { return JSON.parse(r.data)?.home?.tag; } catch { return null; } };
+  await api.post(`${base}/api/console/setDefaultData`, {
+    headers: { authorization: token },
+    data: { data: { home: { tag: 'KEEP-NEWEST', cards: [] } } },
+  });
+  const clr = await api.post(`${base}/api/console/clearDefaultData`, { headers: { authorization: token }, data: {} });
+  eq('clearDefaultData code', (await okJson(clr)).body?.code, 200);
+  const kept = await api.get(`${base}/api/console/getDefaultDataList?page=1&pageSize=100`, { headers: { authorization: token } });
+  const keptTags = ((await okJson(kept)).body?.data?.list || []).map(tagOf);
+  eq('清理历史保留最新快照', keptTags.includes('KEEP-NEWEST'), true);
+  eq('清理历史后条数≤10', keptTags.length <= 10, true);
 }
 
 // 7.6 搜索联想(同源 JSONP)与只读分享页

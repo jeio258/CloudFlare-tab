@@ -144,13 +144,15 @@ export const deleteHistory = (env: Env, id: string) =>
   env.DB.prepare('delete from default_data_history where id = ?').bind(id).run();
 
 // 保留最近 N 条历史，其余删除
+// （历史实现方向相反：按 desc 取 limit keep+1 后删除，删的是最新而非最旧，已修正）
 export const pruneHistory = async (env: Env, keep: number) => {
-  const rows = await env.DB.prepare(
-    'select id from default_data_history order by created_at desc, id desc limit ? offset ?'
+  await env.DB.prepare(
+    `delete from default_data_history where id not in (
+       select id from default_data_history order by created_at desc, id desc limit ?
+     )`
   )
-    .bind(keep + 1, 0)
-    .all<{ id: string }>();
-  for (const r of rows.results || []) await deleteHistory(env, r.id);
+    .bind(Math.max(0, keep))
+    .run();
 };
 
 // —— 书签行存储（cards 表）：push 时整表重建拆行写入，pull 时按 ord 排序拼回原始数组 ——
