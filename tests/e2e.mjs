@@ -410,6 +410,18 @@ const authHdr = { authorization: token };
   await page.waitForTimeout(120);
   eq('D11 记事本即时落盘', await page.evaluate(() => localStorage.getItem('persist:memo:d11memo')), '即时落盘');
 
+  // 图标不放大（Lighthouse image-size-responsive / image-aspect-ratio）
+  await page.evaluate(() => {
+    localStorage.setItem('persist:cards', JSON.stringify([{ id: 'img1', title: 'IM', subTitle: '', url: 'https://x.com', icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==' }]));
+  });
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(2000);
+  const notUpscaled = await page.evaluate(() => {
+    const im = document.querySelector('[data-card-id="img1"] img');
+    return !!im && im.naturalWidth > 0 && im.clientWidth <= im.naturalWidth && im.clientHeight <= im.naturalHeight;
+  });
+  eq('卡片图标不被放大(image-size-responsive)', notUpscaled, true);
+
   // B5：同 URL 去重——天气浮窗 + 天气卡同时挂载只发 1 次 /api/getWeather
   await page.evaluate(() => {
     const s = JSON.parse(localStorage.getItem('persist:settings') || '{}');

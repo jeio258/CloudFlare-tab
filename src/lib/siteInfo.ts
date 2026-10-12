@@ -1,4 +1,4 @@
-// 网站信息+图标抓取：getWebsiteInfo 为主；icon 为空时前端 fallback 至 faviconsnap 直链
+// 网站信息+图标抓取：标题/描述取 getWebsiteInfo；图标统一用尺寸可控源（防小图被放大）
 import { post } from '../api/client';
 
 export interface SiteInfo {
@@ -7,7 +7,16 @@ export interface SiteInfo {
   description: string;
 }
 
-// 二次兜底：faviconsnap 服务直链（前端 img 直接引用）
+// 图标源一：icon.horse，稳定返回 ≥96px（避免显示 55px 时被放大触发 Lighthouse image-size-responsive）
+function iconHorseUrl(url: string): string {
+  try {
+    return `https://icon.horse/icon/${new URL(url).hostname}`;
+  } catch {
+    return '';
+  }
+}
+
+// 图标源二（兜底）：faviconsnap 直链
 function faviconSnapUrl(url: string): string {
   try {
     return `https://faviconsnap.com/api/favicon?url=${encodeURIComponent(new URL(url).origin)}`;
@@ -16,7 +25,7 @@ function faviconSnapUrl(url: string): string {
   }
 }
 
-// 抓取网站信息：icon 取上游结果，为空时用 faviconsnap 直链兜底
+// 抓取网站信息：标题/描述取上游；icon 统一改为尺寸可控源，保证卡片显示（≤55px）不被放大
 export async function fetchSiteInfoWithFavicon(url: string): Promise<SiteInfo | null> {
   let info: SiteInfo | null = null;
   try {
@@ -26,9 +35,6 @@ export async function fetchSiteInfoWithFavicon(url: string): Promise<SiteInfo | 
     /* 上游失败走兜底 */
   }
   if (!info) info = { title: '', icon: '', description: '' };
-  if (!info.icon) {
-    const fallback = faviconSnapUrl(url);
-    if (fallback) info.icon = fallback;
-  }
+  info.icon = iconHorseUrl(url) || faviconSnapUrl(url) || info.icon;
   return info;
 }

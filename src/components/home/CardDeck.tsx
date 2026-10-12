@@ -126,9 +126,9 @@ export default function CardDeck({ cards, groups = [], onAddCard, onOpenCards, o
     if (c.displayStyle === 'image') {
       return (
         <>
-          <img src={c.icon || '/favicon.ico'} alt="" aria-hidden className="pointer-events-none absolute left-4 top-1/2 h-10 w-10 -translate-y-1/2 object-contain opacity-10" />
+          <img src={c.icon || '/favicon.ico'} alt="" aria-hidden className="pointer-events-none absolute left-4 top-1/2 max-h-10 max-w-10 -translate-y-1/2 object-contain opacity-10" />
           <div className="relative z-10 flex h-full w-full items-center justify-center">
-            <img src={c.icon || '/favicon.ico'} alt={c.title} className="h-[55px] w-[55px] object-contain" />
+            <img src={c.icon || '/favicon.ico'} alt={c.title} className="max-h-[55px] max-w-[55px] object-contain" />
           </div>
         </>
       );
@@ -136,7 +136,7 @@ export default function CardDeck({ cards, groups = [], onAddCard, onOpenCards, o
     if (c.displayStyle === 'text') {
       return (
         <>
-          <img src={c.icon || '/favicon.ico'} alt="" aria-hidden className="pointer-events-none absolute left-4 top-1/2 h-10 w-10 -translate-y-1/2 object-contain opacity-10" />
+          <img src={c.icon || '/favicon.ico'} alt="" aria-hidden className="pointer-events-none absolute left-4 top-1/2 max-h-10 max-w-10 -translate-y-1/2 object-contain opacity-10" />
           <div className="relative z-10 flex h-full w-full items-center justify-center overflow-hidden">
             <span
               className="line-clamp-2 px-2 text-center text-sm font-semibold text-ink"
@@ -154,11 +154,11 @@ export default function CardDeck({ cards, groups = [], onAddCard, onOpenCards, o
           src={c.icon || '/favicon.ico'}
           alt=""
           aria-hidden
-          className="pointer-events-none absolute left-4 top-1/2 h-10 w-10 -translate-y-1/2 object-contain opacity-10"
+          className="pointer-events-none absolute left-4 top-1/2 max-h-10 max-w-10 -translate-y-1/2 object-contain opacity-10"
         />
         <div className="relative z-10 flex items-center gap-3 px-4">
           <div className="flex-center h-[55px] w-[55px] shrink-0">
-            <img src={c.icon || '/favicon.ico'} alt="" className="h-full w-full object-contain" />
+            <img src={c.icon || '/favicon.ico'} alt="" className="max-h-full max-w-full object-contain" />
           </div>
           <div className="min-w-0 flex-1 text-right">
             <span
@@ -183,7 +183,7 @@ export default function CardDeck({ cards, groups = [], onAddCard, onOpenCards, o
         {c.title}
       </span>
     ) : (
-      <img src={c.icon || '/favicon.ico'} alt={c.title} className="h-12 w-12 object-contain" />
+      <img src={c.icon || '/favicon.ico'} alt={c.title} className="max-h-12 max-w-12 object-contain" />
     );
 
   // hover 编辑/删除（对齐截图：编辑左上/删除右上，36px 白底圆钮红色图标，骑跨卡顶）
