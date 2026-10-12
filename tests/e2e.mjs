@@ -432,6 +432,7 @@ const authHdr = { authorization: token };
       { id: 'ic1', title: 'IC1', subTitle: '', url: 'https://github.com', icon: 'https://icon.horse/icon/github.com' },
       { id: 'ic2', title: 'IC2', subTitle: '', url: 'https://github.com', icon: '/api/icon?host=github.com' },
       { id: 'ic3', title: 'IC3', subTitle: '', url: 'https://github.com', icon: 'https://faviconsnap.com/api/favicon?url=https://github.com' },
+      { id: 'ic4', title: 'IC4', subTitle: '', url: 'https://www.pc528.net', icon: 'https://www.pc528.net/favicon.ico' },
     ]));
   });
   await page.reload({ waitUntil: 'domcontentloaded' });
@@ -444,6 +445,7 @@ const authHdr = { authorization: token };
   eq('图标归一化为 faviconsnap(icon.horse)', await iconSrcOf('ic1'), SNAP);
   eq('图标归一化为 faviconsnap(旧代理值)', await iconSrcOf('ic2'), SNAP);
   eq('图标归一化为 faviconsnap(origin 形式归一)', await iconSrcOf('ic3'), SNAP);
+  eq('图标归一化为 faviconsnap(直连站点 favicon)', await iconSrcOf('ic4'), 'https://faviconsnap.com/api/favicon?url=www.pc528.net');
 
   // B5：同 URL 去重——天气浮窗 + 天气卡同时挂载只发 1 次 /api/getWeather
   await page.evaluate(() => {
