@@ -41,6 +41,11 @@ const cleanupUsers = [];
   const rfav = await api.get(`${base}/favicon.ico`);
   eq('favicon.ico 200', rfav.status(), 200);
   eq('favicon link 指向 /favicon.ico', /<link[^>]+rel="icon"[^>]+href="\/favicon\.ico"/.test(html), true);
+  // 图标同源代理 /api/icon：返回图片且长缓存（客户端不再直连第三方域）
+  const ricon = await api.get(`${base}/api/icon?host=github.com`);
+  eq('icon 代理 200', ricon.status(), 200);
+  eq('icon 代理 content-type 图片', (ricon.headers()['content-type'] || '').startsWith('image/'), true);
+  eq('icon 代理 长缓存 immutable', /max-age=2592000/.test(ricon.headers()['cache-control'] || ''), true);
   const r404 = await api.get(`${base}/api/does-not-exist`);
   const { status, body } = await okJson(r404);
   eq('catch-all 200', status, 200);
@@ -425,6 +430,18 @@ const authHdr = { authorization: token };
     return !!im && im.naturalWidth > 0 && im.clientWidth <= im.naturalWidth && im.clientHeight <= im.naturalHeight;
   });
   eq('卡片图标不被放大(image-size-responsive)', notUpscaled, true);
+
+  // 图标走本站同源代理：书签里的第三方图标 URL 应在渲染时重写为 /api/icon?host=
+  await page.evaluate(() => {
+    localStorage.setItem('persist:cards', JSON.stringify([{ id: 'ics', title: 'IC', subTitle: '', url: 'https://github.com', icon: 'https://icon.horse/icon/github.com' }]));
+  });
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(1500);
+  const iconRewrite = await page.evaluate(() => {
+    const im = document.querySelector('[data-card-id="ics"] img');
+    return im ? new URL(im.getAttribute('src') || '', location.href).pathname : '';
+  });
+  eq('卡片图标重写为同源代理', iconRewrite, '/api/icon');
 
   // B5：同 URL 去重——天气浮窗 + 天气卡同时挂载只发 1 次 /api/getWeather
   await page.evaluate(() => {

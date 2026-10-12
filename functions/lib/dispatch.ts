@@ -42,6 +42,7 @@ const ROUTES: RouteDef[] = [
   { path: '/api/yiyan', methods: ['GET', 'POST'], opts: { run: widgetRoutes.getYiyan } },
   { path: '/api/search-suggest', methods: ['GET'], opts: { run: widgetRoutes.searchSuggest } },
   { path: '/api/tools/getWebsiteInfo', methods: ['POST'], opts: { body: 'optional', run: widgetRoutes.getWebsiteInfo } },
+  { path: '/api/icon', methods: ['GET'], opts: { run: widgetRoutes.getIcon } },
 
   // 管理后台
   { path: '/api/console/dashboard', methods: ['GET'], opts: { auth: 'admin', run: consoleRoutes.dashboard } },
