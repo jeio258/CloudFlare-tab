@@ -431,17 +431,24 @@ const authHdr = { authorization: token };
   });
   eq('卡片图标不被放大(image-size-responsive)', notUpscaled, true);
 
-  // 图标走本站同源代理：书签里的第三方图标 URL 应在渲染时重写为 /api/icon?host=
+  // 图标走本站同源代理：第三方图标 URL（服务型 + 直连 favicon）应在渲染时重写为 /api/icon?host=
   await page.evaluate(() => {
-    localStorage.setItem('persist:cards', JSON.stringify([{ id: 'ics', title: 'IC', subTitle: '', url: 'https://github.com', icon: 'https://icon.horse/icon/github.com' }]));
+    localStorage.setItem('persist:cards', JSON.stringify([
+      { id: 'ics', title: 'IC', subTitle: '', url: 'https://github.com', icon: 'https://icon.horse/icon/github.com' },
+      { id: 'icd', title: 'ID', subTitle: '', url: 'https://www.example.com', icon: 'https://www.example.com/favicon.ico' },
+    ]));
   });
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1500);
   const iconRewrite = await page.evaluate(() => {
-    const im = document.querySelector('[data-card-id="ics"] img');
-    return im ? new URL(im.getAttribute('src') || '', location.href).pathname : '';
+    const p = (id) => {
+      const im = document.querySelector(`[data-card-id="${id}"] img`);
+      return im ? new URL(im.getAttribute('src') || '', location.href).pathname : '';
+    };
+    return { service: p('ics'), direct: p('icd') };
   });
-  eq('卡片图标重写为同源代理', iconRewrite, '/api/icon');
+  eq('卡片图标重写为同源代理(服务型)', iconRewrite.service, '/api/icon');
+  eq('卡片图标重写为同源代理(直连favicon)', iconRewrite.direct, '/api/icon');
 
   // B5：同 URL 去重——天气浮窗 + 天气卡同时挂载只发 1 次 /api/getWeather
   await page.evaluate(() => {
