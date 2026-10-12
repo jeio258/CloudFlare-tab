@@ -33,10 +33,10 @@ const cleanupUsers = [];
     const rr = await api.get(base + m[1]);
     eq('asset 200', rr.status(), 200);
   } else failures.push('asset ref not found');
-  // D12：/fonts/* 应有长缓存（否则每次加载字体都回源）
+  // /fonts/* 应有长缓存（否则每次加载字体都回源）
   const rf = await api.get(`${base}/fonts/roboto.woff`);
   const fontCC = rf.headers()['cache-control'] || '';
-  eq('fonts 长缓存 immutable(D12)', /max-age=31536000/.test(fontCC) && /immutable/.test(fontCC), true);
+  eq('fonts 长缓存 immutable', /max-age=31536000/.test(fontCC) && /immutable/.test(fontCC), true);
   // 图标：/favicon.ico 可访问，且页面 link 指向它
   const rfav = await api.get(`${base}/favicon.ico`);
   eq('favicon.ico 200', rfav.status(), 200);
@@ -67,8 +67,8 @@ const cleanupUsers = [];
   const r2 = await api.post(`${base}/api/register`, {
     data: { username: uname, password: 'pass123' },
   });
-  const { body: b2 } = await okJson(r2);
-  eq('register 重复用户名', b2?.code, 400);
+  const { body: respBody } = await okJson(r2);
+  eq('register 重复用户名', respBody?.code, 400);
   // 新用户登录(userType=0)
   const r3 = await api.post(`${base}/api/login`, { data: { username: uname, password: 'pass123' } });
   const { body: b3 } = await okJson(r3);
@@ -84,7 +84,7 @@ const cleanupUsers = [];
   eq('editUserInfo code', b4?.code, 200);
   eq('editUserInfo nickname', b4?.data?.nickname, '昵称');
   eq('editUserInfo sex', b4?.data?.sex, 1);
-  // C1：手机号校验（复用 PHONE_RE）——非法格式被拒
+  // 手机号校验（复用 PHONE_RE）——非法格式被拒
   const rBadPhone = await api.post(`${base}/api/user/editUserInfo`, {
     headers: { authorization: ntoken },
     data: { username: uname, phone: '123' },
@@ -134,10 +134,10 @@ const authHdr = { authorization: token };
     headers: authHdr,
     data: { data: data1, timestamp: ts1, baseTimestamp: baseTs },
   });
-  const { body: b2 } = await okJson(r2);
-  eq('push first ts >= ts1', typeof b2?.data?.timestamp === 'number' && b2.data.timestamp >= ts1, true);
+  const { body: respBody } = await okJson(r2);
+  eq('push first ts >= ts1', typeof respBody?.data?.timestamp === 'number' && respBody.data.timestamp >= ts1, true);
 
-  // 数据上限：超大快照被拒绝（P0-4）
+  // 数据上限：超大快照被拒绝
   const rBig = await api.post(`${base}/api/user/push`, {
     headers: authHdr,
     data: { data: { blob: 'x'.repeat(300000) }, timestamp: ts1 + 5, baseTimestamp: 0 },
@@ -145,7 +145,7 @@ const authHdr = { authorization: token };
   const { body: bBig } = await okJson(rBig);
   eq('push 超大数据被拒', bBig?.code, 400);
 
-  // D7：体积按 UTF-8 字节计——100000 个中文≈300KB 字节（>256KB），但字符数仅约 10 万，不得绕过上限
+  // 体积按 UTF-8 字节计——100000 个中文≈300KB 字节（>256KB），但字符数仅约 10 万，不得绕过上限
   const rBigMb = await api.post(`${base}/api/user/push`, {
     headers: authHdr,
     data: { data: { blob: '中'.repeat(100000) }, timestamp: ts1 + 6, baseTimestamp: 0 },
@@ -172,7 +172,7 @@ const authHdr = { authorization: token };
   if (stored) log(`(注：首次 pullWT 有残留数据 ${JSON.stringify(stored).slice(0, 80)})`);
 }
 
-// 3.5 个性分享：setShare + getShareData 联动（R6 新增端点）
+// 3.5 个性分享：setShare + getShareData 联动
 {
   const bad = await api.post(`${base}/api/user/setShare`, { headers: authHdr, data: { enabled: 2 } });
   eq('setShare 非法参数被拒', (await bad.json())?.code, 400);
@@ -186,7 +186,7 @@ const authHdr = { authorization: token };
   const rStopped = await api.get(`${base}/api/getShareData?path=${shareId}`);
   eq('share off → data 2', (await rStopped.json())?.data, 2);
 
-  // 分享最小投影（D2）：推一份含私有字段的快照，验证只回卡片+背景色，不泄露 memos/私有 settings
+  // 分享最小投影：推一份含私有字段的快照，验证只回卡片+背景色，不泄露 memos/私有 settings
   const SECRET_SETTING = 'SHARE_SECRET_TITLE';
   const SECRET_MEMO = 'SHARE_SECRET_MEMO';
   const shareCards = [{ id: 'sh1', title: '分享卡', subTitle: '', url: 'https://share.example.com' }];
@@ -235,7 +235,7 @@ const authHdr = { authorization: token };
       const { execSync } = await import('node:child_process');
       const safeUser = USER.replace(/['"\\]/g, '');
       execSync(
-        `npx wrangler d1 execute cloudflare-tab-db --local --command "update users set user_type = 1 where username = '${safeUser}'"`,
+        `npx wrangler delResp execute cloudflare-tab-db --local --command "update users set user_type = 1 where username = '${safeUser}'"`,
         { stdio: 'pipe', cwd: process.cwd() }
       );
       r = await api.get(`${base}/api/user/isAdmin`, { headers: authHdr });
@@ -257,9 +257,9 @@ const authHdr = { authorization: token };
   const { body: b1 } = await okJson(r1);
   eq('changePwd ok', b1?.code, 200);
   const r2 = await api.post(`${base}/api/login`, { data: { username: USER, password: 'tmp654321' } });
-  const { body: b2 } = await okJson(r2);
-  eq('login new pwd', b2?.code, 200);
-  const token2 = b2?.data?.token;
+  const { body: respBody } = await okJson(r2);
+  eq('login new pwd', respBody?.code, 200);
+  const token2 = respBody?.data?.token;
   await api.post(`${base}/api/user/changePassword`, {
     headers: { authorization: token2 },
     data: { oldPassword: 'tmp654321', newPassword: PASS, confirmPassword: PASS },
@@ -289,14 +289,14 @@ const authHdr = { authorization: token };
   eq('cityList 含北京{label,value}', hasBeijing, true);
 
   const r2 = await api.get(`${base}/api/getWeather?city=beijing`);
-  const { body: b2 } = await okJson(r2);
-  const w = b2?.data?.data?.weather;
-  const weatherOk = b2?.code === 200 && !!w;
+  const { body: respBody } = await okJson(r2);
+  const w = respBody?.data?.data?.weather;
+  const weatherOk = respBody?.code === 200 && !!w;
   if (!weatherOk) {
     skip('weather 全组（外部天气源不可用）');
   } else {
-    eq('weather 双层 data.data', b2?.code === 200 && !!w, true);
-    eq('weather city', b2?.data?.data?.city, '北京');
+    eq('weather 双层 data.data', respBody?.code === 200 && !!w, true);
+    eq('weather city', respBody?.data?.data?.city, '北京');
     eq('weather temp 为字符串', typeof w?.current_temperature === 'string', true);
     eq('weather icon 为字符串(防0丢失)', typeof w?.weather_icon_id === 'string', true);
     eq('weather forecast>=1', Array.isArray(w?.forecast_list) && w.forecast_list.length >= 1, true);
@@ -354,65 +354,65 @@ const authHdr = { authorization: token };
   // 图标默认头像：未登录时右上角头像应为 /favicon.ico
   eq('默认头像使用 /favicon.ico', await page.locator('button[aria-label="用户入口"] img[src="/favicon.ico"]').count(), 1);
 
-  // D3：iconColor/color 不得在信任边界被净化丢弃（本地写路径往返）
+  // iconColor/color 不得在信任边界被净化丢弃（本地写路径往返）
   page.on('dialog', (d) => d.accept());
   await page.evaluate(() => {
     localStorage.setItem('persist:cards', JSON.stringify([
-      { id: 'd3a', title: 'D3A', subTitle: '', url: 'https://d3a.example.com' },
-      { id: 'd3b', title: 'D3B', subTitle: '', url: 'https://d3b.example.com', iconColor: '#ff0000', color: '#00ff00' },
+      { id: 'keep-a', title: 'KEEP-A', subTitle: '', url: 'https://keep-a.example.com' },
+      { id: 'keep-b', title: 'KEEP-B', subTitle: '', url: 'https://keep-b.example.com', iconColor: '#ff0000', color: '#00ff00' },
     ]));
   });
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(2500);
   // 右键删除 D3A（触发 setCards→saveCards 写路径），保留带字段的 D3B
-  await page.locator('[data-card-id="d3a"]').click({ button: 'right' });
+  await page.locator('[data-card-id="keep-a"]').click({ button: 'right' });
   await page.waitForTimeout(400);
   await page.locator('[role="menu"] [role="menuitem"]', { hasText: '删除此卡片' }).click();
   await page.waitForTimeout(600);
-  const d3kept = await page.evaluate(() => {
+  const keptCard = await page.evaluate(() => {
     const list = JSON.parse(localStorage.getItem('persist:cards') || '[]');
-    return list.find((c) => c.id === 'd3b') || null;
+    return list.find((c) => c.id === 'keep-b') || null;
   });
-  eq('D3 写路径保留 iconColor/color', !!d3kept && d3kept.iconColor === '#ff0000' && d3kept.color === '#00ff00', true);
+  eq('写路径保留 iconColor/color', !!keptCard && keptCard.iconColor === '#ff0000' && keptCard.color === '#00ff00', true);
 
-  // D6：非法卡片 type 在信任边界收敛为 'link'，合法挂件类型保留（写路径往返）
+  // 非法卡片 type 在信任边界收敛为 'link'，合法挂件类型保留（写路径往返）
   await page.evaluate(() => {
     localStorage.setItem('persist:cards', JSON.stringify([
-      { id: 'd6a', title: 'D6A', subTitle: '', url: 'https://d6a.example.com', type: 'evilWidget' },
-      { id: 'd6b', title: 'D6B', subTitle: '', url: 'https://d6b.example.com', type: 'calendar' },
-      { id: 'd6c', title: 'D6C', subTitle: '', url: 'https://d6c.example.com' },
+      { id: 'type-a', title: 'TYPE-A', subTitle: '', url: 'https://type-a.example.com', type: 'evilWidget' },
+      { id: 'type-b', title: 'TYPE-B', subTitle: '', url: 'https://type-b.example.com', type: 'calendar' },
+      { id: 'type-c', title: 'TYPE-C', subTitle: '', url: 'https://type-c.example.com' },
     ]));
   });
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(2500);
   // 删除 D6C 触发出一次写路径，保留 D6A/D6B
-  await page.locator('[data-card-id="d6c"]').click({ button: 'right' });
+  await page.locator('[data-card-id="type-c"]').click({ button: 'right' });
   await page.waitForTimeout(400);
   await page.locator('[role="menu"] [role="menuitem"]', { hasText: '删除此卡片' }).click();
   await page.waitForTimeout(600);
-  const d6types = await page.evaluate(() => {
+  const typesById = await page.evaluate(() => {
     const list = JSON.parse(localStorage.getItem('persist:cards') || '[]');
     return Object.fromEntries(list.map((c) => [c.id, c.type]));
   });
-  eq('D6 非法 type 收敛为 link', d6types.d6a, 'link');
-  eq('D6 合法挂件 type 保留', d6types.d6b, 'calendar');
+  eq('非法 type 收敛为 link', typesById['type-a'], 'link');
+  eq('合法挂件 type 保留', typesById['type-b'], 'calendar');
 
-  // D11：iframe src 加固（仅 http(s)；同源不放宽沙箱）+ 记事本即时落盘
+  // iframe src 加固（仅 http(s)；同源不放宽沙箱）+ 记事本即时落盘
   await page.evaluate(() => {
     localStorage.setItem('persist:cards', JSON.stringify([
-      { id: 'd11bad', title: 'BAD', subTitle: '', url: '', type: 'iframe', config: JSON.stringify({ src: 'javascript:alert(1)' }) },
-      { id: 'd11same', title: 'SAME', subTitle: '', url: '', type: 'iframe', config: JSON.stringify({ src: '/robots.txt' }) },
-      { id: 'd11memo', title: 'Memo', subTitle: '', url: '', type: 'memo' },
+      { id: 'iframe-bad', title: 'BAD', subTitle: '', url: '', type: 'iframe', config: JSON.stringify({ src: 'javascript:alert(1)' }) },
+      { id: 'iframe-same', title: 'SAME', subTitle: '', url: '', type: 'iframe', config: JSON.stringify({ src: '/robots.txt' }) },
+      { id: 'memo-card', title: 'Memo', subTitle: '', url: '', type: 'memo' },
     ]));
   });
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(2500);
-  eq('D11 iframe 非 http(s) 不渲染', await page.locator('[data-card-id="d11bad"] iframe').count(), 0);
-  const sameSandbox = await page.locator('[data-card-id="d11same"] iframe').getAttribute('sandbox');
-  eq('D11 同源 iframe 不放宽 allow-same-origin', (sameSandbox || '').includes('allow-same-origin'), false);
-  await page.locator('[data-card-id="d11memo"] textarea').fill('即时落盘');
+  eq('iframe 非 http(s) 不渲染', await page.locator('[data-card-id="iframe-bad"] iframe').count(), 0);
+  const sameSandbox = await page.locator('[data-card-id="iframe-same"] iframe').getAttribute('sandbox');
+  eq('同源 iframe 不放宽 allow-same-origin', (sameSandbox || '').includes('allow-same-origin'), false);
+  await page.locator('[data-card-id="memo-card"] textarea').fill('即时落盘');
   await page.waitForTimeout(120);
-  eq('D11 记事本即时落盘', await page.evaluate(() => localStorage.getItem('persist:memo:d11memo')), '即时落盘');
+  eq('记事本即时落盘', await page.evaluate(() => localStorage.getItem('persist:memo:memo-card')), '即时落盘');
 
   // 图标不放大（Lighthouse image-size-responsive / image-aspect-ratio）
   await page.evaluate(() => {
@@ -446,19 +446,19 @@ const authHdr = { authorization: token };
   eq('已是 faviconsnap 则原样', await iconSrcOf('ic3'), 'https://faviconsnap.com/api/favicon?url=github.com');
   eq('本站路径图标原样', await iconSrcOf('ic4'), '/icons/ref-welcome.svg');
 
-  // B5：同 URL 去重——天气浮窗 + 天气卡同时挂载只发 1 次 /api/getWeather
+  // 同 URL 去重——天气浮窗 + 天气卡同时挂载只发 1 次 /api/getWeather
   await page.evaluate(() => {
     const s = JSON.parse(localStorage.getItem('persist:settings') || '{}');
     s.showWeather = true;
     s.immersive = false;
     localStorage.setItem('persist:settings', JSON.stringify(s));
-    localStorage.setItem('persist:cards', JSON.stringify([{ id: 'b5w', title: 'W', subTitle: '', url: '', type: 'weather' }]));
+    localStorage.setItem('persist:cards', JSON.stringify([{ id: 'weather-card', title: 'W', subTitle: '', url: '', type: 'weather' }]));
   });
   const wReqs = [];
   page.on('request', (r) => { if (r.url().includes('/api/getWeather')) wReqs.push(r.url()); });
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(2500);
-  eq('B5 同 URL 天气仅请求一次', wReqs.length, 1);
+  eq('同 URL 天气仅请求一次', wReqs.length, 1);
 
   // 关闭可能出现的公告通知弹层，避免遮挡头像
   const notifClose = page.locator('.ant-notification-notice-close, .ant-notification-close-icon').first();
@@ -479,28 +479,28 @@ const authHdr = { authorization: token };
   eq('UI login http', loginResp.status(), 200);
   await page.waitForTimeout(1500);
 
-  // D8：memos-only 拉取不得残留 skipAuto 而误吞后续用户改动的自动推送
+  // memos-only 拉取不得残留 skipAuto 而误吞后续用户改动的自动推送
   // 0) 等登录触发的自动推送（2s 防抖）落定，否则它会把本地 settings/cards 推上云，破坏后续前提
   await page.waitForTimeout(2600);
   // 1) 造一份「仅 memos + cards:[]」云快照（无 settings → 拉取不改动本地 settings/cards；cards:[] 清空行表）
-  const d8base = Number((await okJson(await api.get(`${base}/api/user/pullWT`, { headers: { authorization: token } })))?.body?.data?.timestamp) || 0;
-  const d8seed = await api.post(`${base}/api/user/push`, {
+  const baseTs = Number((await okJson(await api.get(`${base}/api/user/pullWT`, { headers: { authorization: token } })))?.body?.data?.timestamp) || 0;
+  const seedResp = await api.post(`${base}/api/user/push`, {
     headers: { authorization: token },
-    data: { data: { memos: { d8: 'x' }, cards: [] }, timestamp: Date.now(), baseTimestamp: d8base },
+    data: { data: { memos: { note: 'x' }, cards: [] }, timestamp: Date.now(), baseTimestamp: baseTs },
   });
-  eq('D8 造 memos 快照', (await okJson(d8seed))?.body?.code, 200);
+  eq('造 memos 快照', (await okJson(seedResp))?.body?.code, 200);
   // 2) 抽屉内切「数据同步」→ 点击「拉取云端」（markSkip=true 的 pull 路径）
   await page.locator('.ant-drawer .ant-menu-item', { hasText: '数据同步' }).click();
   await page.waitForTimeout(500);
   await page.locator('.ant-drawer button', { hasText: '拉取云端' }).click();
   await page.waitForTimeout(1200);
-  // 3) 切「主界面」切换开关（触发用户改动）→ 新实现应自动推送；旧实现因 skipAuto 残留被吞
+  // 3) 切「主界面」切换开关（触发用户改动）→ 应自动推送（skipAuto 残留会误吞）
   await page.locator('.ant-drawer .ant-menu-item', { hasText: '主界面' }).click();
   await page.waitForTimeout(400);
-  const d8pushReq = page.waitForRequest((r) => r.url().endsWith('/api/user/push') && r.method() === 'POST', { timeout: 6000 });
+  const pushReq = page.waitForRequest((r) => r.url().endsWith('/api/user/push') && r.method() === 'POST', { timeout: 6000 });
   await page.locator('.ant-drawer .ant-switch').last().click();
-  const d8pushed = await d8pushReq.then(() => true).catch(() => false);
-  eq('D8 拉取后用户改动仍触发自动推送', d8pushed, true);
+  const pushed = await pushReq.then(() => true).catch(() => false);
+  eq('拉取后用户改动仍触发自动推送', pushed, true);
 
   const stored = await page.evaluate(() => {
     const raw = localStorage.getItem('persist:user');
@@ -511,25 +511,25 @@ const authHdr = { authorization: token };
   eq('UI token persisted', typeof tok === 'string' && tok.length > 20, true);
   eq('UI no console errors', consoleErrs.length, 0);
 
-  // B2：极简路径路由（替代 react-router-dom）
-  const b2 = await browser.newPage({ viewport: { width: 1280, height: 800 } });
-  const b2Errs = [];
-  b2.on('pageerror', (e) => b2Errs.push(String(e)));
-  await b2.goto(`${base}/s/__b2_probe__`, { waitUntil: 'domcontentloaded' });
-  await b2.waitForTimeout(1500);
-  eq('B2 /s/* 可渲染', (await b2.locator('body').innerText()).trim().length > 0, true);
-  await b2.goto(`${base}/__b2_unknown__`, { waitUntil: 'domcontentloaded' });
-  await b2.waitForTimeout(1500);
-  eq('B2 未知路径回落首页', (await b2.locator('input[type="search"]').count()) >= 1, true);
-  eq('B2 无未捕获异常', b2Errs.length, 0, b2Errs.join(' | '));
-  await b2.close();
-  // B2：产物 react chunk 不再含 react-router（以 react-router 专有标识 basename 判定）
-  const b2html = await (await api.get(`${base}/`)).text();
-  const reactRef = b2html.match(/\/assets\/react-[A-Za-z0-9._-]+\.js/)?.[0];
-  if (!reactRef) failures.push('B2 react chunk ref not found');
+  // 极简路径路由（替代 react-router-dom）
+  const sharePage = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+  const shareErrs = [];
+  sharePage.on('pageerror', (e) => shareErrs.push(String(e)));
+  await sharePage.goto(`${base}/s/__probe__`, { waitUntil: 'domcontentloaded' });
+  await sharePage.waitForTimeout(1500);
+  eq('/s/* 可渲染', (await sharePage.locator('body').innerText()).trim().length > 0, true);
+  await sharePage.goto(`${base}/__unknown__`, { waitUntil: 'domcontentloaded' });
+  await sharePage.waitForTimeout(1500);
+  eq('未知路径回落首页', (await sharePage.locator('input[type="search"]').count()) >= 1, true);
+  eq('无未捕获异常', shareErrs.length, 0, shareErrs.join(' | '));
+  await sharePage.close();
+  // 产物 react chunk 不含 react-router（以 basename 标识判定）
+  const homeHtml = await (await api.get(`${base}/`)).text();
+  const reactRef = homeHtml.match(/\/assets\/react-[A-Za-z0-9._-]+\.js/)?.[0];
+  if (!reactRef) failures.push('react chunk ref not found');
   else {
     const js = await (await api.get(base + reactRef)).text();
-    eq('B2 产物不含 react-router', js.includes('basename'), false);
+    eq('产物不含 react-router', js.includes('basename'), false);
   }
 
   await page.screenshot({ path: '/tmp/gotab-after-login.png' });
@@ -577,12 +577,12 @@ const authHdr = { authorization: token };
     data: { id: noticeId, title: '公告标题2', content: '内容2' },
   });
   eq('editNotice code', (await okJson(e1)).body?.code, 200);
-  const d1 = await api.post(`${base}/api/console/deleteNotice`, {
+  const delResp = await api.post(`${base}/api/console/deleteNotice`, {
     headers: { authorization: token },
     data: { id: noticeId },
   });
-  eq('deleteNotice code', (await okJson(d1)).body?.code, 200);
-  // C2：rejectNotice 与 deleteNotice 等价（端点保留、共用实现）
+  eq('deleteNotice code', (await okJson(delResp)).body?.code, 200);
+  // rejectNotice 与 deleteNotice 等价（端点保留、共用实现）
   await api.post(`${base}/api/console/addNotice`, { headers: { authorization: token }, data: { title: '驳回用', content: 'x' } });
   const l2 = await api.get(`${base}/api/console/getNoticeList`, { headers: { authorization: token } });
   const rejectId = ((await okJson(l2)).body?.data?.list || []).find((n) => n.title === '驳回用')?.id;
@@ -636,7 +636,7 @@ const authHdr = { authorization: token };
   const dhlb = (await okJson(dhl)).body;
   eq('默认主页历史列表≥1', Array.isArray(dhlb?.data?.list) && dhlb.data.list.length >= 1, true);
 
-  // D1：清理历史应「保留最新」，而非删除最新（旧实现方向相反）
+  // 清理历史应「保留最新」，而非删除最新
   const tagOf = (r) => { try { return JSON.parse(r.data)?.home?.tag; } catch { return null; } };
   await api.post(`${base}/api/console/setDefaultData`, {
     headers: { authorization: token },
@@ -657,7 +657,7 @@ const authHdr = { authorization: token };
   const sgText = await sg.text();
   const sgOk = sg.status() === 200 && sgText.startsWith('cb123(') && sgText.includes('"q"');
   eq('search-suggest JSONP', sgOk, true);
-  // 产物已同源化：主 bundle 内不再直连百度 sugrec（新版入口为 index-*.js，静态 import main-*.js）
+  // 主 bundle 不直连百度 sugrec（入口 index-*.js，静态 import main-*.js）
   {
     const r = await api.get(`${base}/`);
     const html = await r.text();
@@ -686,7 +686,7 @@ const authHdr = { authorization: token };
   eq('getShareData 未知返回 null', sh2b?.data === null, true);
 }
 
-// 7.7 站点配置端点（后台功能开关页依赖，原缺失返回 404）
+// 7.7 站点配置端点（后台功能开关页依赖）
 {
   const r = await api.get(`${base}/api/getSiteConfig`);
   const { status, body } = await okJson(r);

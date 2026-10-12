@@ -77,7 +77,7 @@ export interface SiteSettings {
   showWeather: boolean;
   weatherCity: string;      // 天气城市（getCityList value）
   showHistoryWidget: boolean; // 历史记录挂件（A10）
-  disguiseEnabled: boolean;   // 伪装助手（A9，F2 切换）
+  disguiseEnabled: boolean;   // 伪装助手
   showHotEvents: boolean;
   showExchangeRate: boolean;
   showYiyan: boolean;

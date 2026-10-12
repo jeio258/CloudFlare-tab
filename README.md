@@ -85,11 +85,25 @@ npm run deploy:workers
 - **构建额度**：免费版 Pages 每月 500 次构建、单次构建 20 分钟上限
 - **Node 版本**：构建环境 ≥18（`.nvmrc` 固定 22）
 
+## 浏览器扩展（离线壳，可选）
+
+把站点打包为「新标签页替换」扩展：UI 随扩展本地加载（无跳转、离线可用），接口仍走线上域名。
+
+```bash
+npm run build:ext        # 生成 extension-dist/
+```
+
+- 安装：`chrome://extensions` → 开发者模式 → 加载已解压的扩展程序 → 选 `extension-dist/`。
+- 换接口域名：改 `extension/apibase.js` 一行后重新加载扩展。
+- 改 UI / 依赖：需重新 `npm run build:ext`。
+
 ## 目录结构
 
 ```
 ├── src/                 # 前端（页面/组件/store/api client）
 ├── functions/           # Pages Functions（lib/routes 分层，契约统一）
+├── extension/           # 浏览器扩展源文件（manifest/apibase/icons）
+├── scripts/             # 构建与运维脚本（含 build-extension.mjs）
 ├── schema.sql           # D1 全量建表（幂等）
 ├── tests/e2e.mjs        # API + 桌面 e2e
 ├── tests/e2e-mobile.mjs # 移动视口 e2e

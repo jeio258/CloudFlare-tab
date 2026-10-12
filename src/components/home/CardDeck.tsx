@@ -56,7 +56,7 @@ function withLongPress(node: ReactElement): ReactElement {
 }
 
 export default function CardDeck({ cards, groups = [], onAddCard, onOpenCards, onEditCard, onOpenSettings }: Props) {
-  // A8 动作卡上下文（书签管理/设置中心）
+  // 动作卡上下文（书签管理/设置中心）
   useEffect(() => {
     setWidgetCtx({ openCards: () => onOpenCards?.(), openSettings: () => onOpenSettings?.() });
   }, [onOpenCards, onOpenSettings]);
@@ -225,7 +225,7 @@ export default function CardDeck({ cards, groups = [], onAddCard, onOpenCards, o
     return [1, 1];
   };
 
-  // A7 组件卡片：type 为组件时渲染组件而非链接（编辑/删除/右键保留）
+  // 组件卡片：type 为组件时渲染组件而非链接（编辑/删除/右键保留）
   const isWidget = (c: HomeCard) => !!c.type && c.type !== 'link';
   const widgetBody = (c: HomeCard, compact: boolean) => {
     let config: Record<string, unknown> = {};
@@ -237,7 +237,7 @@ export default function CardDeck({ cards, groups = [], onAddCard, onOpenCards, o
     return renderWidget(c.type as WidgetType, c.id, config, compact);
   };
 
-  // 右键/长按菜单（批量编辑/编辑/复制链接/换位/删除）：自绘菜单（P1-3 去 antd Dropdown），固定定位+视口内钳位
+  // 右键/长按菜单（批量编辑/编辑/复制链接/换位/删除）：自绘菜单（不用 antd Dropdown），固定定位+视口内钳位
   interface CtxMenuState { x: number; y: number; card: HomeCard; idxShown: number }
   const [ctxMenu, setCtxMenu] = useState<CtxMenuState | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);

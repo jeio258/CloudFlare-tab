@@ -1,4 +1,4 @@
-// 伪装助手（A9）：触发键切换全屏伪装页（静态搜索页样式），纯前端本地行为
+// 伪装助手：触发键切换全屏伪装页（静态搜索页样式），纯前端本地行为
 import { useEffect, useState } from 'react';
 import { useSite } from '../../store/site';
 
@@ -18,7 +18,7 @@ export default function DisguiseLayer() {
     return () => window.removeEventListener('keydown', onKey);
   }, [settings.disguiseEnabled]);
 
-  // 伪装助手卡片触发（A8 动作卡）
+  // 伪装助手卡片触发
   useEffect(() => {
     const onEvt = () => setOn((v) => !v);
     window.addEventListener('cftab:disguise-toggle', onEvt);

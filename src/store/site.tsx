@@ -10,7 +10,7 @@ import { pullSnapshot, pushSnapshot, type Snapshot } from './sync';
 import { useAuth } from './auth';
 import { normalizeCards, normalizeMemos, normalizeSettings } from '../lib/normalize';
 
-// 记事本内容随快照云同步（P2-6）：push 收集、pull 还原；旧快照无 memos 字段时本地不动（向后兼容）
+// 记事本内容随快照云同步：push 收集、pull 还原；快照无 memos 字段时本地不动（向后兼容）
 const MEMO_PREFIX = 'persist:memo:';
 function collectMemos(): Record<string, string> {
   const out: Record<string, string> = {};
@@ -153,7 +153,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
 
   // 云快照落地（pull 两处共用）：markSkip 时抑制随后的 autoSync 推送（防拉取触发推送循环）
   // skipAuto 仅在「本次确实改动 settings/cards（也即会触发推送 effect）」时置位；
-  // 旧实现对 memos 也置位，而 memos 不改变 effect deps → 标记残留，会误吞下一次用户改动的推送
+  // 勿对 memos 置位 skipAuto：memos 不改变 effect deps，标记会残留并误吞下一次用户改动的推送
   const applyPull = useCallback(
     (snapshot: Snapshot, timestamp: number, markSkip: boolean) => {
       const clean = applySnapshotClean(snapshot);

@@ -50,7 +50,7 @@ export interface HomeCard {
   color?: string;
   group?: string; // 所属分组名（''/缺省 = 未分组）
   displayStyle?: 'default' | 'horizontal' | 'vertical' | 'image' | 'text'; // 展示样式（对齐参考：默认/横版/竖版/纯图/纯文本）
-  type?: 'link' | WidgetCardType; // 卡片类型（A7 组件族 + A8 挂件卡）
+  type?: 'link' | WidgetCardType; // 卡片类型（组件 / 挂件）
   config?: string;     // 组件配置 JSON（如 {"date":"2026-12-31"}）
   size?: '1x1' | '2x1' | '4x1' | '1x2' | '2x2' | '4x2'; // 卡片大小（列x行，对齐参考编辑弹窗「卡片大小」六选项，缺省回落 displayStyle）
   fontSize?: number;   // 卡片名称字号覆盖（批量调整）

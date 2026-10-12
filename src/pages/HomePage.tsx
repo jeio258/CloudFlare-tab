@@ -14,7 +14,7 @@ import { HotEventsCard, ExchangeRateCard } from '../components/home/Widgets';
 import type { SettingsTab } from '../components/settings/SettingsDrawer';
 import { useSite } from '../store/site';
 
-// P1-3 拆包：设置抽屉/卡片编辑弹窗含全量 antd，按需加载（首屏零 antd）
+// 拆包：设置抽屉/卡片编辑弹窗含全量 antd，按需加载（首屏零 antd）
 const SettingsDrawer = lazy(() => import('../components/settings/SettingsDrawer').then((m) => ({ default: m.SettingsDrawer })));
 const CardEditModal = lazy(() => import('../components/settings/CardEditModal'));
 

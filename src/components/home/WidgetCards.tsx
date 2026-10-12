@@ -1,5 +1,5 @@
-// A7 卡片组件族 + A8 挂件卡片化：通过 HomeCard.type + config(JSON) 挂载为可添加卡片
-// A8 挂件卡（对齐参考 addComponent 清单）：天气/热点榜单/实时汇率/一言/历史记录/书签管理/设置中心/伪装助手
+// 组件卡 + 挂件卡：通过 HomeCard.type + config(JSON) 挂载为可添加卡片
+// 挂件卡清单：天气/热点榜单/实时汇率/一言/历史记录/书签管理/设置中心/伪装助手
 import { useEffect, useRef, useState } from 'react';
 import { useFetch, useLocalStoragePoll } from '../../lib/hooks';
 import { useSite } from '../../store/site';
@@ -15,7 +15,7 @@ export function setWidgetCtx(ctx: WidgetCtx) {
   widgetCtx = ctx;
 }
 
-// —— A8：天气（紧凑） ——
+// —— 天气（紧凑） ——
 function WeatherMini() {
   const { settings } = useSite();
   const { data, err } = useFetch<{ data: { weather: { city: string; current_temperature: string; current_condition: string; weather_icon_id: string } } }>(
@@ -37,7 +37,7 @@ function WeatherMini() {
   );
 }
 
-// —— A8：热点榜单（紧凑前 3 条） ——
+// —— 热点榜单（紧凑前 3 条） ——
 function HotMini() {
   const { data, err } = useFetch<{ hot: { title: string; url: string }[] } | { title: string; url: string }[]>('/api/getHotEvents?type=weibo');
   const list = (Array.isArray(data) ? data : data?.hot || []).slice(0, 3) as { title: string; url: string }[];
@@ -55,7 +55,7 @@ function HotMini() {
   );
 }
 
-// —— A8：实时汇率（紧凑前 3 币种） ——
+// —— 实时汇率（紧凑前 3 币种） ——
 function FxMini() {
   const { data, err } = useFetch<{ rates: Record<string, number> }>('/api/exchange-rate');
   const rates = data?.rates || {};
@@ -77,7 +77,7 @@ function FxMini() {
   );
 }
 
-// —— A8：历史记录（紧凑前 3 条） ——
+// —— 历史记录（紧凑前 3 条） ——
 function HistoryMini() {
   const list = useLocalStoragePoll<{ url: string; title: string }>('persist:visitHistory', 3000).slice(0, 3);
   if (list.length === 0) return <div className="text-center text-[10px] text-gray-400">暂无历史</div>;
@@ -92,7 +92,7 @@ function HistoryMini() {
   );
 }
 
-// —— A8：动作卡（书签管理/设置中心/伪装助手） ——
+// —— 动作卡（书签管理/设置中心/伪装助手） ——
 function ActionMini({ icon, label, onClick }: { icon: string; label: string; onClick: () => void }) {
   return (
     <button type="button" onClick={onClick} className="flex h-full w-full flex-col items-center justify-center gap-0.5">

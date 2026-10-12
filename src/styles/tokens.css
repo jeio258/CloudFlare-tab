@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /* 设计令牌：颜色/阴影/圆角单一来源在 tailwind.config.js（shadow-card/shadow-glass/ink/muted 等 utility）；
-   此处仅保留 body 直接消费的变量（grep var(--*) 取证：其余 20 个零消费变量已删） */
+   此处仅保留 body 直接消费的变量（勿新增未被消费的变量） */
 :root {
   --ink: #1f2328;
   --fs-body: 14px;

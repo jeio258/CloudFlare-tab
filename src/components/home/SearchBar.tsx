@@ -148,7 +148,7 @@ export default function SearchBar() {
         className="relative z-30 flex w-[73vw] items-stretch overflow-visible shadow-glass backdrop-blur-[40px] backdrop-saturate-200"
         style={{ maxWidth: settings.searchMaxWidth, height: h, borderRadius: settings.searchRadius, backgroundColor: `rgba(255,255,255,${alpha})` }}
       >
-        {/* 引擎选择（self-stretch 统一内外高度，移动端不再溢出裁切） */}
+        {/* 引擎选择（self-stretch 统一内外高度，移动端不溢出裁切） */}
         <div ref={engRef} className="relative flex items-stretch">
           <button
             type="button"
@@ -255,7 +255,7 @@ export default function SearchBar() {
             </div>
           )}
         </div>
-        {/* 搜索按钮（图标/文字两种样式；高度断点统一 32/36，不再依赖设置值溢出容器） */}
+        {/* 搜索按钮（图标/文字两种样式；高度断点统一 32/36，不随设置值溢出容器） */}
         <div className="flex items-center self-stretch">
           <button
             type="button"

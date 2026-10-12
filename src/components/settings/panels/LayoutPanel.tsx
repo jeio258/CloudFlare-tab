@@ -1,4 +1,4 @@
-// 排版布局：已融合为统一方格网格（默认模式），不再区分标准/方块
+// 排版布局：统一方格网格（默认模式）
 export function LayoutPanel() {
   return (
     <div className="space-y-4">

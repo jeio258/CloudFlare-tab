@@ -1,15 +1,6 @@
-// 打包浏览器扩展（离线壳，方案 B）：把前端 dist 打进扩展目录 extension-dist/，
-// 新标签页直接加载本地打包的 index.html（瞬时打开、无跳转），接口经 apibase.js 指向线上域名。
-//
-// 产物：extension-dist/（未跟踪，加入 .gitignore）
-//   manifest.json  ← extension/manifest.json
-//   apibase.js     ← extension/apibase.js（改域名只改这里）
-//   newtab.html    ← dist/index.html（注入 apibase.js；资源为绝对路径 /assets /fonts…，
-//                     在 chrome-extension://<id>/ 根下解析即扩展根，故随包拷贝到根）
-//   assets/ fonts/ images/ icons/ favicon.ico ← dist 静态资源
-//
-// 用法：npm run build:ext  （= npm run build && node scripts/build-extension.mjs）
-// 安装：chrome://extensions → 开发者模式 → 加载已解压的扩展程序 → 选 extension-dist/
+// 打包浏览器扩展（离线壳）：把 dist 打进 extension-dist/，新标签页直接加载本地 newtab.html。
+// 资源用绝对路径（/assets /fonts…），在 chrome-extension://<id>/ 根下解析即扩展根，故静态资源拷到根。
+// 构建/安装步骤见 README「浏览器扩展」。
 import { cpSync, readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, relative } from 'node:path';

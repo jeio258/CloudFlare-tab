@@ -1,4 +1,4 @@
-// 用户入口：点头像直接滑出设置抽屉（自绘头像，P1-3：首屏不引入 antd）
+// 用户入口：点头像直接滑出设置抽屉（自绘头像，首屏不引入 antd）
 import { useAuth } from '../../store/auth';
 import type { SettingsTab } from '../settings/SettingsDrawer';
 
