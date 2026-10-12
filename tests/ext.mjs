@@ -65,13 +65,27 @@ const info = await page.evaluate(() => {
   };
 });
 
+// 扩展图标：manifest 声明了 icons，且各尺寸文件可访问（否则浏览器显示默认占位图标）
+const iconCheck = await page.evaluate(async () => {
+  const m = await (await fetch(chrome.runtime.getURL('manifest.json'))).json();
+  const declared = Object.values(m.icons || {});
+  const results = [];
+  for (const p of declared) {
+    const r = await fetch(chrome.runtime.getURL(p));
+    results.push({ p, ok: r.ok, type: r.headers.get('content-type') || '' });
+  }
+  return { declared, results };
+});
+
 console.log('扩展 id:', id, '| apibase:', info.base);
 console.log('root 渲染长度:', info.rootLen, '| 文本:', info.text);
 console.log('JS 报错:', errs.length ? errs.slice(0, 5) : '无');
 console.log('API 请求:', apiReqs.length, apiReqs[0] ? `例: ${apiReqs[0]}` : '');
+console.log('扩展图标:', JSON.stringify(iconCheck));
 
+const iconsOk = iconCheck.declared.length >= 4 && iconCheck.results.every((r) => r.ok && r.type.startsWith('image/'));
 const ok = info.rootLen > 500 && errs.length === 0 && info.base === API
-  && apiReqs.length > 0 && apiReqs.every((u) => u.startsWith(API + '/'));
+  && apiReqs.length > 0 && apiReqs.every((u) => u.startsWith(API + '/')) && iconsOk;
 console.log(ok ? '✓ EXT PASS' : '✗ EXT FAIL');
 await ctx.close();
 process.exit(ok ? 0 : 1);

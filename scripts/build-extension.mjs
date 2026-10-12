@@ -42,9 +42,10 @@ let html = readFileSync(join(dist, 'index.html'), 'utf8');
 html = html.replace('<head>', '<head>\n  <script src="./apibase.js"></script>');
 writeFileSync(join(out, 'newtab.html'), html);
 
-// 3) 拷贝扩展源文件
+// 3) 拷贝扩展源文件（清单、接口基址、图标）
 cpSync(join(src, 'manifest.json'), join(out, 'manifest.json'));
 cpSync(join(src, 'apibase.js'), join(out, 'apibase.js'));
+if (existsSync(join(src, 'icons'))) cpSync(join(src, 'icons'), join(out, 'icons'), { recursive: true });
 
 console.log('extension-dist 已生成：');
 console.log('  加载路径：', out);
