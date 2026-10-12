@@ -41,11 +41,6 @@ const cleanupUsers = [];
   const rfav = await api.get(`${base}/favicon.ico`);
   eq('favicon.ico 200', rfav.status(), 200);
   eq('favicon link 指向 /favicon.ico', /<link[^>]+rel="icon"[^>]+href="\/favicon\.ico"/.test(html), true);
-  // 图标同源代理 /api/icon：返回图片且长缓存（客户端不再直连第三方域）
-  const ricon = await api.get(`${base}/api/icon?host=github.com`);
-  eq('icon 代理 200', ricon.status(), 200);
-  eq('icon 代理 content-type 图片', (ricon.headers()['content-type'] || '').startsWith('image/'), true);
-  eq('icon 代理 长缓存 immutable', /max-age=2592000/.test(ricon.headers()['cache-control'] || ''), true);
   const r404 = await api.get(`${base}/api/does-not-exist`);
   const { status, body } = await okJson(r404);
   eq('catch-all 200', status, 200);
@@ -431,24 +426,24 @@ const authHdr = { authorization: token };
   });
   eq('卡片图标不被放大(image-size-responsive)', notUpscaled, true);
 
-  // 图标走本站同源代理：第三方图标 URL（服务型 + 直连 favicon）应在渲染时重写为 /api/icon?host=
+  // 图标一律归一为指定源 faviconsnap（域名形式）
   await page.evaluate(() => {
     localStorage.setItem('persist:cards', JSON.stringify([
-      { id: 'ics', title: 'IC', subTitle: '', url: 'https://github.com', icon: 'https://icon.horse/icon/github.com' },
-      { id: 'icd', title: 'ID', subTitle: '', url: 'https://www.example.com', icon: 'https://www.example.com/favicon.ico' },
+      { id: 'ic1', title: 'IC1', subTitle: '', url: 'https://github.com', icon: 'https://icon.horse/icon/github.com' },
+      { id: 'ic2', title: 'IC2', subTitle: '', url: 'https://github.com', icon: '/api/icon?host=github.com' },
+      { id: 'ic3', title: 'IC3', subTitle: '', url: 'https://github.com', icon: 'https://faviconsnap.com/api/favicon?url=https://github.com' },
     ]));
   });
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1500);
-  const iconRewrite = await page.evaluate(() => {
-    const p = (id) => {
-      const im = document.querySelector(`[data-card-id="${id}"] img`);
-      return im ? new URL(im.getAttribute('src') || '', location.href).pathname : '';
-    };
-    return { service: p('ics'), direct: p('icd') };
-  });
-  eq('卡片图标重写为同源代理(服务型)', iconRewrite.service, '/api/icon');
-  eq('卡片图标重写为同源代理(直连favicon)', iconRewrite.direct, '/api/icon');
+  const iconSrcOf = (id) => page.evaluate((i) => {
+    const im = document.querySelector(`[data-card-id="${i}"] img`);
+    return im ? im.getAttribute('src') : '';
+  }, id);
+  const SNAP = 'https://faviconsnap.com/api/favicon?url=github.com';
+  eq('图标归一化为 faviconsnap(icon.horse)', await iconSrcOf('ic1'), SNAP);
+  eq('图标归一化为 faviconsnap(旧代理值)', await iconSrcOf('ic2'), SNAP);
+  eq('图标归一化为 faviconsnap(origin 形式归一)', await iconSrcOf('ic3'), SNAP);
 
   // B5：同 URL 去重——天气浮窗 + 天气卡同时挂载只发 1 次 /api/getWeather
   await page.evaluate(() => {

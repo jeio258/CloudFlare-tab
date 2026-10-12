@@ -7,6 +7,7 @@ import {
 } from '@ant-design/icons';
 import { useSite } from '../../store/site';
 import { fetchSiteInfoWithFavicon } from '../../lib/siteInfo';
+import { iconSrc } from '../../lib/iconSrc';
 import CardEditModal from './CardEditModal';
 import { parseBookmarkFile, bookmarkToCard } from '../../lib/bookmarkImport';
 
@@ -169,7 +170,7 @@ export function CardManagerPanel({ initialBatch = false, initialSelect }: { init
   const renderRow = (c: (typeof cards)[number], globalIdx: number) => (
     <div key={c.id} className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2">
       {batch && <Checkbox checked={selected.has(c.id)} onChange={() => toggleSelect(c.id)} />}
-      <img src={c.icon || '/icons/website.svg'} alt="" className="h-8 w-8 rounded object-contain" />
+      <img src={iconSrc(c.icon) || '/icons/website.svg'} alt="" className="h-8 w-8 rounded object-contain" />
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-medium">{c.title}</div>
         <div className="truncate text-xs text-gray-400">{c.url}</div>
