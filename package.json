@@ -6,11 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:ext": "npm run build && node scripts/build-extension.mjs",
     "build:cloud": "npm run build && npm run db:migrate",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.functions.json",
     "test": "node tests/e2e.mjs",
     "test:e2e": "node tests/e2e-mobile.mjs",
+    "test:ext": "node tests/ext.mjs",
     "dev:cf": "wrangler pages dev dist --local",
     "deploy": "vite build && wrangler pages deploy dist --project-name cloudflare-tab --branch master",
     "deploy:pages": "npm run build && npm run db:migrate && wrangler pages deploy dist --project-name cloudflare-tab --branch master",
