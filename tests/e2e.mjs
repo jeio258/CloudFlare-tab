@@ -426,13 +426,13 @@ const authHdr = { authorization: token };
   });
   eq('卡片图标不被放大(image-size-responsive)', notUpscaled, true);
 
-  // 图标一律归一为指定源 faviconsnap（域名形式）
+  // 图标一律按其域名归一为 faviconsnap（已是 faviconsnap / 本站路径则原样）
   await page.evaluate(() => {
     localStorage.setItem('persist:cards', JSON.stringify([
-      { id: 'ic1', title: 'IC1', subTitle: '', url: 'https://github.com', icon: 'https://icon.horse/icon/github.com' },
-      { id: 'ic2', title: 'IC2', subTitle: '', url: 'https://github.com', icon: '/api/icon?host=github.com' },
-      { id: 'ic3', title: 'IC3', subTitle: '', url: 'https://github.com', icon: 'https://faviconsnap.com/api/favicon?url=https://github.com' },
-      { id: 'ic4', title: 'IC4', subTitle: '', url: 'https://www.pc528.net', icon: 'https://www.pc528.net/favicon.ico' },
+      { id: 'ic1', title: 'IC1', subTitle: '', url: 'https://www.pc528.net', icon: 'https://www.pc528.net/favicon.ico' },
+      { id: 'ic2', title: 'IC2', subTitle: '', url: 'https://www.ilovepdf.com', icon: 'https://www.ilovepdf.com/img/app-icon.png' },
+      { id: 'ic3', title: 'IC3', subTitle: '', url: 'https://github.com', icon: 'https://faviconsnap.com/api/favicon?url=github.com' },
+      { id: 'ic4', title: 'IC4', subTitle: '', url: 'https://x.com', icon: '/icons/ref-welcome.svg' },
     ]));
   });
   await page.reload({ waitUntil: 'domcontentloaded' });
@@ -441,11 +441,10 @@ const authHdr = { authorization: token };
     const im = document.querySelector(`[data-card-id="${i}"] img`);
     return im ? im.getAttribute('src') : '';
   }, id);
-  const SNAP = 'https://faviconsnap.com/api/favicon?url=github.com';
-  eq('图标归一化为 faviconsnap(icon.horse)', await iconSrcOf('ic1'), SNAP);
-  eq('图标归一化为 faviconsnap(旧代理值)', await iconSrcOf('ic2'), SNAP);
-  eq('图标归一化为 faviconsnap(origin 形式归一)', await iconSrcOf('ic3'), SNAP);
-  eq('图标归一化为 faviconsnap(直连站点 favicon)', await iconSrcOf('ic4'), 'https://faviconsnap.com/api/favicon?url=www.pc528.net');
+  eq('图标按域名归一为 faviconsnap(直连站点 favicon)', await iconSrcOf('ic1'), 'https://faviconsnap.com/api/favicon?url=www.pc528.net');
+  eq('图标按域名归一为 faviconsnap(自定义图片)', await iconSrcOf('ic2'), 'https://faviconsnap.com/api/favicon?url=www.ilovepdf.com');
+  eq('已是 faviconsnap 则原样', await iconSrcOf('ic3'), 'https://faviconsnap.com/api/favicon?url=github.com');
+  eq('本站路径图标原样', await iconSrcOf('ic4'), '/icons/ref-welcome.svg');
 
   // B5：同 URL 去重——天气浮窗 + 天气卡同时挂载只发 1 次 /api/getWeather
   await page.evaluate(() => {
