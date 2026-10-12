@@ -161,18 +161,42 @@ export async function exchangeRates() {
 }
 
 // ===== 一言 =====
-const pick = () => SAY_FALLBACK[Math.floor(Math.random() * SAY_FALLBACK.length)];
+export interface SayItem {
+  content: string;
+  author: string;
+  from?: string;
+}
 
-export async function yiyan(): Promise<string> {
-  try {
-    const j = (await fetchJson('https://uapis.cn/api/v1/saying/random')) as {
-      content?: string;
-      item?: { content?: string };
-    };
-    return j?.content || j?.item?.content || pick();
-  } catch {
-    return pick();
+const CJK_RE = /[\u4e00-\u9fff]/;
+const LATIN_RE = /[A-Za-z]/;
+// 仅接受中文内容：必须含汉字，且不含拉丁字母（剔除英文及其它语言/夹杂英文的语句）
+const isChineseOnly = (t: string) => CJK_RE.test(t) && !LATIN_RE.test(t);
+
+const pick = (): SayItem => SAY_FALLBACK[Math.floor(Math.random() * SAY_FALLBACK.length)];
+
+// hitokoto：文学/诗词/哲学/影视/原创，中文语料为主；逐条校验直到取到「中文 + 真实作者」
+// 附加随机参数避开上游按 URL 缓存（否则同一时刻总是同一条）
+const HITOKOTO_URL = 'https://v1.hitokoto.cn/?c=d&c=i&c=k&c=h&c=e';
+
+export async function yiyan(): Promise<SayItem> {
+  for (let i = 0; i < 6; i++) {
+    try {
+      const j = (await fetchJson(`${HITOKOTO_URL}&_=${Date.now()}${Math.random().toString(36).slice(2, 8)}`)) as {
+        hitokoto?: string;
+        from?: string | null;
+        from_who?: string | null;
+      };
+      const content = String(j?.hitokoto || '').trim();
+      const author = String(j?.from_who || '').trim();
+      // 中文内容 + 必须有真实作者（from_who），否则换一条
+      if (isChineseOnly(content) && author) {
+        return { content, author, from: String(j?.from || '').trim() || undefined };
+      }
+    } catch {
+      /* 换一条重试 */
+    }
   }
+  return pick();
 }
 
 // ===== 城市表 =====

@@ -57,13 +57,14 @@ export default function BottomLinks({ onOpenSettings, showYiyan }: Props) {
 // 页脚一言（置于链接行上方，每日一言开关控制）
 function YiyanFooter() {
   const { settings } = useSite();
-  const { data, err } = useFetch<{ content: string }>('/api/yiyan');
+  const { data, err } = useFetch<{ content: string; author: string }>('/api/yiyan');
   const chipShown = settings.showWeather && !settings.immersive;
   const text = err ? '' : (data?.content?.trim() || '');
+  const author = data?.author?.trim() || '';
   if (!text) return null;
   return (
     <div className={`absolute bottom-9 ${chipShown ? 'left-36 right-3' : 'inset-x-0'} flex items-center justify-center text-xs text-white/85`} style={{ fontFamily: 'Roboto, arial, sans-serif' }}>
-      {text} —— 一言
+      {text}{author && ` —— ${author}`}
     </div>
   );
 }

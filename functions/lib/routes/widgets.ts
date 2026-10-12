@@ -30,7 +30,7 @@ export const getHotEvents = async ({ request }: RouteContext) => {
 
 export const getExchangeRate = async () => ({ rates: await exchangeRates() });
 
-export const getYiyan = async () => ({ content: await yiyan() });
+export const getYiyan = async () => await yiyan();
 
 // 搜索联想：百度 sugrec 的 JSONP 同源代理（免 CORS，cb 白名单过滤）
 export const searchSuggest = async ({ request }: RouteContext) => {

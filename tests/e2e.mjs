@@ -317,6 +317,10 @@ const authHdr = { authorization: token };
   const { body: b3 } = await okJson(r3);
   eq('yiyan code200', b3?.code, 200);
   eq('yiyan content 非空', typeof b3?.data?.content === 'string' && b3.data.content.length > 0, true);
+  // 仅中文内容：含汉字且不含拉丁字母（过滤英文等非中文语句）
+  eq('yiyan 仅中文内容', /[\u4e00-\u9fff]/.test(b3?.data?.content || '') && !/[A-Za-z]/.test(b3?.data?.content || ''), true);
+  // 显示真实作者：author 非空且不是固定占位的“一言”
+  eq('yiyan 作者为真实姓名', typeof b3?.data?.author === 'string' && b3.data.author.length > 0 && b3.data.author !== '一言', true);
 
   // 前端实际为 POST（body 带 types），需保证 POST 也 200（修复 404）
   const r3p = await api.post(`${base}/api/yiyan`, { data: { types: ['a', 'b'] } });

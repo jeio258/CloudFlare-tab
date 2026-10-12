@@ -22,12 +22,13 @@ export const FX_FALLBACK: Record<string, number> = {
   AUD: 4.72, CAD: 5.24, CHF: 8.1, NZD: 4.32,
 };
 
-export const SAY_FALLBACK = [
-  '花有重开日，人无再少年。',
-  '纸上得来终觉浅，绝知此事要躬行。',
-  '长风破浪会有时，直挂云帆济沧海。',
-  '念念不忘，必有回响。',
-  '路虽远，行则将至；事虽难，做则必成。',
+// 一言兜底（均为中文，且标注真实作者；上游不可用或过滤后无合适条目时使用）
+export const SAY_FALLBACK: { content: string; author: string }[] = [
+  { content: '花有重开日，人无再少年。', author: '关汉卿' },
+  { content: '纸上得来终觉浅，绝知此事要躬行。', author: '陆游' },
+  { content: '长风破浪会有时，直挂云帆济沧海。', author: '李白' },
+  { content: '海内存知己，天涯若比邻。', author: '王勃' },
+  { content: '天生我材必有用，千金散尽还复来。', author: '李白' },
 ];
 
 export interface City {

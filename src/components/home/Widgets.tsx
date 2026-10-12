@@ -71,12 +71,13 @@ export function ExchangeRateCard() {
 
 // ===== 一言（文案对齐参考：一言加载中… / 一言加载失败）=====
 export function YiyanCard() {
-  const { data, err } = useFetch<{ content: string }>('/api/yiyan');
+  const { data, err } = useFetch<{ content: string; author: string }>('/api/yiyan');
   const text = data?.content?.trim();
+  const author = data?.author?.trim();
   return (
     <div className={`${CARD} w-[300px]`}>
       <p className="min-h-10 text-sm leading-6">{text || (err ? '一言加载失败' : '一言加载中…')}</p>
-      {text && <div className="mt-1 text-right text-xs text-gray-400">—— 一言</div>}
+      {text && author && <div className="mt-1 text-right text-xs text-gray-400">—— {author}</div>}
     </div>
   );
 }
