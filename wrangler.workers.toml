@@ -1,6 +1,6 @@
 # Workers 部署配置（与 wrangler.toml 的 Pages 部署互斥，二选一）
 # 部署：npm run build && npm run db:migrate && npx wrangler deploy -c wrangler.workers.toml
-name = "cloudflare-tab-workers"
+name = "cloudflare-tab"
 main = "worker.ts"
 compatibility_date = "2025-08-16"
 compatibility_flags = ["nodejs_compat"]
