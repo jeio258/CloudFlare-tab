@@ -5,6 +5,8 @@ name = "cloudflare-tab"
 main = "worker.ts"
 compatibility_date = "2025-08-16"
 compatibility_flags = ["nodejs_compat"]
+# 保留 Dashboard/Secret 里已设置的变量（如 JWT_SECRET），否则每次部署会把它们清空
+keep_vars = true
 
 # D1 绑定必须位于任何 [section] 之前（TOML 顶层键），否则会被解析进 assets 段导致绑定丢失
 d1_databases = [

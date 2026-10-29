@@ -64,8 +64,8 @@ npm run deploy:workers
    - Pages：Create application → Pages → Connect to Git → 选仓库 → 分支 `master`
    - Workers：Create application → Workers → Connect to Git → 选仓库 → 分支 `master`（Workers Builds）
 3. **构建设置**：
-   - Build command：`npm ci && npm run build && node scripts/prepare-pages.mjs && npm run db:migrate`（构建 + 组装 Pages Functions + 自动执行 D1 远端迁移；Workers 项目由下方 Deploy command 剔除 `dist/functions`）
-   - Pages 输出目录：`dist`；Workers：Deploy command 填 `rm -rf dist/functions && npx wrangler deploy -c wrangler.workers.toml`（Workers 资产会原样托管 `dist`，须先剔除 `functions/` 以免服务端源码被静态暴露）
+   - **Pages 项目**：Build command `npm ci && npm run build && node scripts/prepare-pages.mjs && npm run db:migrate`；Build output directory `dist`
+   - **Workers 项目**：Build command `npm ci && npm run build && npm run db:migrate`；Deploy command `npx wrangler deploy -c wrangler.workers.toml`（build 已不产出 `functions/`，无需再删）
    - Root directory：留空（仓库根即项目根）
 4. **环境变量/绑定**：D1 绑定 `DB`（database_id 需已回填对应 wrangler 配置）、Secret `JWT_SECRET`
 5. Save and Deploy → 首次部署完成
