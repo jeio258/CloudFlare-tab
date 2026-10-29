@@ -6,6 +6,8 @@ cd "$(dirname "$0")/.."
 pkill -9 -f "gotab/node_modules/wrangler/[w]rangler-dist" 2>/dev/null || true
 pkill -9 -f "gotab/.*[w]orkerd" 2>/dev/null || true
 sleep 2
+# dist 必须是「纯静态 + 注入 functions」才可供 pages dev 提供 /api
+npm run build >/tmp/gotab-build.log 2>&1 && node scripts/prepare-pages.mjs >>/tmp/gotab-build.log 2>&1 || { echo "build/prepare-pages 失败，见 /tmp/gotab-build.log"; exit 1; }
 npx wrangler pages dev dist --local --port 8799 >/tmp/gotab-dev.log 2>&1 &
 for i in $(seq 1 60); do
   sleep 2

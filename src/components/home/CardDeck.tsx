@@ -1,12 +1,15 @@
 // 卡片区：统一方格网格布局（融合原 standard/squares 两形态，默认方格模式）
 // 64px 格 + 列 gap 32/行 gap 40（对齐参考站实测）；size 六选项 → 网格占格；拖拽换位/hover 编辑删除/右键/分组 tabs 全保留
 import { cloneElement, useEffect, useRef, useState } from 'react';
-import type { DragEvent as RDragEvent, MouseEvent as ReactMouseEvent, ReactElement, ReactNode } from 'react';
-import { renderWidget, setWidgetCtx, type WidgetType } from './WidgetCards';
+import type { MouseEvent as ReactMouseEvent, ReactElement } from 'react';
+import { setWidgetCtx } from './WidgetCards';
 import type { HomeCard } from '../../api/types';
 import { useSite } from '../../store/site';
 import { openUrl } from './SearchBar';
-import { iconSrc } from '../../lib/iconSrc';
+import CardBody, { isWidget } from './card/CardBody';
+import HoverActions from './card/HoverActions';
+import { useCardDrag } from './card/drag';
+import { pushVisit } from './card/history';
 
 interface Props {
   cards: HomeCard[];
@@ -70,148 +73,11 @@ export default function CardDeck({ cards, groups = [], onAddCard, onOpenCards, o
       : cards.filter((c) => c.group === cur);
   const open = (url: string, title = '') => (e: { preventDefault: () => void }) => {
     e.preventDefault();
-    // 本地访问历史（A10：历史记录数据源，本站内点击）
-    try {
-      const list = JSON.parse(localStorage.getItem('persist:visitHistory') || '[]');
-      if (Array.isArray(list)) {
-        list.unshift({ url, title, at: Date.now() });
-        localStorage.setItem('persist:visitHistory', JSON.stringify(list.slice(0, 20)));
-      }
-    } catch {
-      /* 忽略 */
-    }
+    pushVisit(url, title);
     openUrl(url, settings.openType);
   };
 
-  // 行/列内拖拽换位：拖到同行或同列的另一张卡上交换位置，其余卡片不动
-  const dragId = useRef<string | null>(null);
-  const rootRef = useRef<HTMLDivElement>(null);
-  // dragstart 用容器级原生监听（捕获阶段），React 合成 onDragStart 实测不触发
-  useEffect(() => {
-    const el = rootRef.current;
-    if (!el) return;
-    const onStart = (e: DragEvent) => {
-      const card = (e.target as HTMLElement).closest?.('[data-card-id]');
-      if (!card) return;
-      const id = card.getAttribute('data-card-id');
-      if (!id) return;
-      dragId.current = id;
-      if (e.dataTransfer) {
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', id);
-      }
-    };
-    el.addEventListener('dragstart', onStart, true);
-    return () => el.removeEventListener('dragstart', onStart, true);
-  }, []);
-  const onDropOn = (targetId: string) => (e: RDragEvent) => {
-    e.preventDefault();
-    const from = cards.findIndex((c) => c.id === dragId.current);
-    const to = cards.findIndex((c) => c.id === targetId);
-    if (from < 0 || to < 0 || from === to) return;
-    const a = document.querySelector(`[data-card-id="${CSS.escape(cards[from].id)}"]`);
-    const b = document.querySelector(`[data-card-id="${CSS.escape(cards[to].id)}"]`);
-    if (!a || !b) return;
-    const ra = a.getBoundingClientRect();
-    const rb = b.getBoundingClientRect();
-    const sameRow = Math.abs(ra.top - rb.top) < ra.height / 2;
-    const sameCol = Math.abs(ra.left - rb.left) < ra.width / 2;
-    if (!sameRow && !sameCol) return;
-    const next = [...cards];
-    [next[from], next[to]] = [next[to], next[from]];
-    setCards(next);
-  };
-
-  // 卡内容（两形态共用；展示样式：默认/纯图/纯文本，对齐参考 addorEditCardForm；主图标 55px/水印 40px 对齐 tab.kfkf.asia 实测）
-  const cardInner = (c: HomeCard): ReactNode => {
-    if (c.displayStyle === 'image') {
-      return (
-        <>
-          <img src={iconSrc(c.icon)} alt="" aria-hidden className="pointer-events-none absolute left-4 top-1/2 max-h-10 max-w-10 -translate-y-1/2 object-contain opacity-10" />
-          <div className="relative z-10 flex h-full w-full items-center justify-center">
-            <img src={iconSrc(c.icon)} alt={c.title} className="max-h-[55px] max-w-[55px] object-contain" />
-          </div>
-        </>
-      );
-    }
-    if (c.displayStyle === 'text') {
-      return (
-        <>
-          <img src={iconSrc(c.icon)} alt="" aria-hidden className="pointer-events-none absolute left-4 top-1/2 max-h-10 max-w-10 -translate-y-1/2 object-contain opacity-10" />
-          <div className="relative z-10 flex h-full w-full items-center justify-center overflow-hidden">
-            <span
-              className="line-clamp-2 px-2 text-center text-sm font-semibold text-ink"
-              style={{ color: (settings.simpleMode && settings.simpleFont) || c.fontColor || undefined, fontSize: c.fontSize ? `${c.fontSize}px` : undefined }}
-            >
-              {c.title}
-            </span>
-          </div>
-        </>
-      );
-    }
-    return (
-      <>
-        <img
-          src={iconSrc(c.icon)}
-          alt=""
-          aria-hidden
-          className="pointer-events-none absolute left-4 top-1/2 max-h-10 max-w-10 -translate-y-1/2 object-contain opacity-10"
-        />
-        <div className="relative z-10 flex items-center gap-3 px-4">
-          <div className="flex-center h-[55px] w-[55px] shrink-0">
-            <img src={iconSrc(c.icon)} alt="" className="max-h-full max-w-full object-contain" />
-          </div>
-          <div className="min-w-0 flex-1 text-right">
-            <span
-              className="line-clamp-1 text-sm font-semibold text-ink"
-              style={{ color: (settings.simpleMode && settings.simpleFont) || c.fontColor || undefined, fontSize: c.fontSize ? `${c.fontSize}px` : undefined }}
-            >
-              {c.title}
-            </span>
-          </div>
-        </div>
-      </>
-    );
-  };
-
-  // 窄卡体（竖版/纯图/纯文本：64×64 图标或文字居中，名称走 underName/流内）
-  const narrowInner = (c: HomeCard) =>
-    c.displayStyle === 'text' ? (
-      <span
-        className="line-clamp-2 px-1.5 text-center text-sm font-semibold text-ink"
-        style={{ color: (settings.simpleMode && settings.simpleFont) || c.fontColor || undefined, fontSize: c.fontSize ? `${c.fontSize}px` : undefined }}
-      >
-        {c.title}
-      </span>
-    ) : (
-      <img src={iconSrc(c.icon)} alt={c.title} className="max-h-12 max-w-12 object-contain" />
-    );
-
-  // hover 编辑/删除（对齐截图：编辑左上/删除右上，36px 白底圆钮红色图标，骑跨卡顶）
-  const hoverActions = (c: HomeCard) => (
-    <>
-      {onEditCard && (
-        <button
-          type="button"
-          aria-label={`编辑 ${c.title}`}
-          onClick={() => onEditCard(c.id)}
-          className="absolute -left-1.5 -top-4 z-20 hidden h-9 w-9 items-center justify-center rounded-full bg-white text-base text-red-500 shadow-lg group-hover:flex"
-        >
-          ✎
-        </button>
-      )}
-      <button
-        type="button"
-        aria-label={`删除 ${c.title}`}
-        onClick={() => {
-          if (confirm(`删除卡片「${c.title}」？`)) setCards(cards.filter((x) => x.id !== c.id));
-        }}
-        className="absolute -right-1.5 -top-4 z-20 hidden h-9 w-9 items-center justify-center rounded-full bg-white text-base text-red-500 shadow-lg group-hover:flex"
-      >
-        ×
-      </button>
-    </>
-  );
+  const { rootRef, onDropOn } = useCardDrag(cards, setCards);
 
   const cardShell = 'card-hover-hitbox card-motion relative flex overflow-hidden border-0 bg-white shadow-card transition-transform duration-300 hover:-translate-y-0.5';
 
@@ -223,18 +89,6 @@ export default function CardDeck({ cards, groups = [], onAddCard, onOpenCards, o
       if (m) return [Number(m[1]), Number(m[2])];
     }
     return [1, 1];
-  };
-
-  // 组件卡片：type 为组件时渲染组件而非链接（编辑/删除/右键保留）
-  const isWidget = (c: HomeCard) => !!c.type && c.type !== 'link';
-  const widgetBody = (c: HomeCard, compact: boolean) => {
-    let config: Record<string, unknown> = {};
-    try {
-      config = c.config ? (JSON.parse(c.config) as Record<string, unknown>) : {};
-    } catch {
-      /* 忽略非法配置 */
-    }
-    return renderWidget(c.type as WidgetType, c.id, config, compact);
   };
 
   // 右键/长按菜单（批量编辑/编辑/复制链接/换位/删除）：自绘菜单（不用 antd Dropdown），固定定位+视口内钳位
@@ -307,13 +161,6 @@ export default function CardDeck({ cards, groups = [], onAddCard, onOpenCards, o
     const [colSpan] = gridSpan(c);
     const wide = colSpan >= 2;
     const title = `${c.title}${c.subTitle ? ' · ' + c.subTitle : ''}`;
-    const body = isWidget(c) ? (
-      widgetBody(c, false)
-    ) : wide ? (
-      cardInner(c)
-    ) : (
-      narrowInner(c)
-    );
     return ctxWrap(c, (
       <div
         key={c.id}
@@ -324,7 +171,9 @@ export default function CardDeck({ cards, groups = [], onAddCard, onOpenCards, o
         onDrop={onDropOn(c.id)}
       >
         {isWidget(c) ? (
-          <div className={`${cardShell} h-full w-full rounded-[18px]`} style={{ backgroundColor: c.bgColor || undefined }}>{body}</div>
+          <div className={`${cardShell} h-full w-full rounded-[18px]`} style={{ backgroundColor: c.bgColor || undefined }}>
+            <CardBody card={c} wide={wide} />
+          </div>
         ) : (
           <a
             href={c.url}
@@ -335,10 +184,10 @@ export default function CardDeck({ cards, groups = [], onAddCard, onOpenCards, o
             className={`${cardShell} h-full w-full rounded-[18px] cursor-grab ${wide ? 'items-center' : 'items-center justify-center'} active:cursor-grabbing`}
             style={{ backgroundColor: c.bgColor || undefined }}
           >
-            {body}
+            <CardBody card={c} wide={wide} />
           </a>
         )}
-        {hoverActions(c)}
+        <HoverActions card={c} onEditCard={onEditCard} onDelete={(id) => setCards(cards.filter((x) => x.id !== id))} />
         {c.displayStyle !== 'image' && (
           <>
             {/* 卡下名称：流内，溢出至行间隙显示 */}

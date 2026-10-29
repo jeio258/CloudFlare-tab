@@ -26,7 +26,8 @@
 
 ```bash
 npm install
-npm run dev            # 本地开发（wrangler pages dev，D1 本地模拟）
+npm run dev            # 前端开发服务器（vite，仅 UI，无 /api）
+npm run dev:cf         # 全栈本地开发（build + prepare-pages + wrangler pages dev，D1 本地模拟）
 npm run build          # 产物构建至 dist/
 npm run test           # API + 桌面 e2e（需本地服务已起）
 npm run test:e2e       # 移动视口 e2e（375×812）
@@ -43,13 +44,14 @@ npm run test:e2e       # 移动视口 e2e（375×812）
 ### 方式一：CLI 手动部署
 
 ```bash
-# Pages（原方式，不含迁移）
-npm run deploy
-
-# Pages / Workers（均自动执行 D1 迁移）
+# Pages：build → 组装 dist/functions → D1 迁移 → 发布
 npm run deploy:pages
+
+# Workers：build → D1 迁移 → 发布（worker.ts + dist 静态资产）
 npm run deploy:workers
 ```
+
+`npm run build` 只产出纯静态 `dist`（前端资源 + `_headers`）。Pages 的 `functions/` 由 `scripts/prepare-pages.mjs` 在部署前单独复制进 `dist/functions`，因此不要用裸 `dist` 直接发布 Pages。
 
 ### 方式二：绑定 GitHub 仓库自动部署（推荐生产）
 
@@ -62,7 +64,7 @@ npm run deploy:workers
    - Pages：Create application → Pages → Connect to Git → 选仓库 → 分支 `master`
    - Workers：Create application → Workers → Connect to Git → 选仓库 → 分支 `master`（Workers Builds）
 3. **构建设置**：
-   - Build command：`npm ci && npm run build:cloud`（构建 + 自动执行 D1 远端迁移）
+   - Build command：`npm ci && npm run build && node scripts/prepare-pages.mjs && npm run db:migrate`（构建 + 组装 Pages Functions + 自动执行 D1 远端迁移；Workers 项目由下方 Deploy command 剔除 `dist/functions`）
    - Pages 输出目录：`dist`；Workers：Deploy command 填 `rm -rf dist/functions && npx wrangler deploy -c wrangler.workers.toml`（Workers 资产会原样托管 `dist`，须先剔除 `functions/` 以免服务端源码被静态暴露）
    - Root directory：留空（仓库根即项目根）
 4. **环境变量/绑定**：D1 绑定 `DB`（database_id 需已回填对应 wrangler 配置）、Secret `JWT_SECRET`
@@ -79,7 +81,7 @@ npm run deploy:workers
 **约束条件：**
 
 - **GitHub App 授权必须在控制台完成**，无法仅凭 API Token 建立仓库绑定；绑定后可通过 API 查询/调整项目配置
-- **D1 迁移依赖幂等**：`schema.sql` 全部 `CREATE TABLE IF NOT EXISTS` / 幂等写入，重复执行安全；迁移随构建执行（`build:cloud`），迁移失败即构建失败并阻断本次部署（线上仍是上一版本）
+- **D1 迁移依赖幂等**：`schema.sql` 全部 `CREATE TABLE IF NOT EXISTS` / 幂等写入，重复执行安全；迁移随构建执行（`db:migrate`），迁移失败即构建失败并阻断本次部署（线上仍是上一版本）
 - **远端 D1 需预先创建**并回填 `database_id`（Pages 与 Workers 配置各一份），否则构建期 `db:migrate` 失败
 - **同一 Cloudflare 项目只能选一种运行时**：Pages（`wrangler.toml`）或 Workers（`wrangler.workers.toml`）；切换需重建项目
 - **构建额度**：免费版 Pages 每月 500 次构建、单次构建 20 分钟上限

@@ -1,12 +1,13 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { cpSync, readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const root = dirname(fileURLToPath(import.meta.url));
 
-// Cloudflare Pages 部署产物：dist/ = 前端构建 + functions/（Pages Functions）+ _headers
+// vite build 只产出纯静态 dist（前端资源 + _headers）；Pages 专用的 functions/
+// 不在构建期进入 dist，由 scripts/prepare-pages.mjs 在部署前单独组装
 // SPA 回退不再写 _redirects（CF 环检测 code 100324 拒绝 `/* /index.html 200`）：
 // Pages 对根含 index.html 的项目自动做无扩展名路径回退，深链接 /s/* 直接命中
 const pagesPlugin = () => ({
@@ -14,11 +15,6 @@ const pagesPlugin = () => ({
   async closeBundle() {
     const out = join(root, 'dist');
     mkdirSync(out, { recursive: true });
-    const fns = join(root, 'functions');
-    if (existsSync(fns)) {
-      if (existsSync(join(out, 'functions'))) rmSync(join(out, 'functions'), { recursive: true });
-      cpSync(fns, join(out, 'functions'), { recursive: true });
-    }
     writeFileSync(
       join(out, '_headers'),
       [
@@ -42,9 +38,9 @@ const pagesPlugin = () => ({
     // CSS 内联：首屏唯一样式表直接进 HTML，消除阻塞渲染的串行请求（真实网络下每请求 300ms+）
     const htmlPath = join(out, 'index.html');
     let html = readFileSync(htmlPath, 'utf8');
-    html = html.replace(/<link rel="stylesheet"[^>]*href="(\/assets\/[^"]+\.css)"[^>]*>/g, (_, href) => {
+    html = html.replace(/<link rel="stylesheet"[^>]*href="(\/assets\/[^"]+\.css)"[^>]*>/g, (match, href) => {
       const cssPath = join(out, href.slice(1));
-      if (!existsSync(cssPath)) return _;
+      if (!existsSync(cssPath)) return match;
       const css = readFileSync(cssPath, 'utf8');
       rmSync(cssPath);
       return `<style>${css}</style>`;

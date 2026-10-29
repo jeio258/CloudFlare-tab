@@ -1,5 +1,6 @@
 // D1 仓储：users / user_data / notices / default_data / default_data_history
 import type { Env, UserRow } from './core';
+import { CARD_FIELDS, CARD_FIELD_LIST } from '../../shared/cardFields';
 
 export const getUserByUsername = (env: Env, username: string) =>
   env.DB.prepare('select * from users where username = ?')
@@ -156,42 +157,30 @@ export const pruneHistory = async (env: Env, keep: number) => {
 };
 
 // —— 书签行存储（cards 表）：push 时整表重建拆行写入，pull 时按 ord 排序拼回原始数组 ——
-interface CardRow {
-  card_id: string;
-  ord: number;
-  title: string;
-  sub_title: string;
-  url: string;
-  icon: string;
-  icon_color: string;
-  color: string;
-  group_name: string;
-  display_style: string;
-  type: string;
-  config: string;
-  size: string;
-  font_size: number | null;
-  font_color: string;
-  bg_color: string;
-}
+// 列名与驼峰名的对应关系由 shared/cardFields.ts 字段表给出，本文件只做行/值转换
+type ColumnValue<R> = R extends { kind: 'number' } ? number | null : string;
+type CardRow = {
+  [F in (typeof CARD_FIELDS)[number] as F['column']]: ColumnValue<F['rule']>;
+} & { ord: number };
 
-const toCard = (r: CardRow): Record<string, unknown> => ({
-  id: r.card_id,
-  title: r.title,
-  subTitle: r.sub_title,
-  url: r.url,
-  ...(r.icon ? { icon: r.icon } : {}),
-  ...(r.icon_color ? { iconColor: r.icon_color } : {}),
-  ...(r.color ? { color: r.color } : {}),
-  ...(r.group_name ? { group: r.group_name } : {}),
-  ...(r.display_style ? { displayStyle: r.display_style } : {}),
-  type: r.type || 'link',
-  ...(r.config ? { config: r.config } : {}),
-  ...(r.size ? { size: r.size } : {}),
-  ...(r.font_size != null ? { fontSize: r.font_size } : {}),
-  ...(r.font_color ? { fontColor: r.font_color } : {}),
-  ...(r.bg_color ? { bgColor: r.bg_color } : {}),
-});
+const cardColumns = CARD_FIELD_LIST.map((f) => f.column);
+// ord 紧跟 card_id（与 schema 列序一致），其余列按字段表顺序
+const INSERT_COLUMNS = ['user_id', cardColumns[0], 'ord', ...cardColumns.slice(1)];
+const INSERT_SQL = `insert into cards (${INSERT_COLUMNS.join(', ')})
+  values (${INSERT_COLUMNS.map(() => '?').join(', ')})
+  on conflict(user_id, card_id) do update set
+    ${['ord = excluded.ord', ...CARD_FIELD_LIST.slice(1).map((f) => `${f.column} = excluded.${f.column}`)].join(', ')}`;
+
+const toCard = (r: CardRow): Record<string, unknown> => {
+  const row = r as unknown as Record<string, unknown>;
+  const out: Record<string, unknown> = {};
+  for (const f of CARD_FIELD_LIST) {
+    const v = row[f.column];
+    if (f.db === 'always') out[f.key] = v || f.dbFallback || '';
+    else if (v !== '' && v != null) out[f.key] = v;
+  }
+  return out;
+};
 
 export const getUserCards = async (env: Env, userId: string): Promise<Record<string, unknown>[]> => {
   const { results } = await env.DB.prepare('select * from cards where user_id = ? order by ord').bind(userId).all<CardRow>();
@@ -205,19 +194,11 @@ export const replaceUserCards = (env: Env, userId: string, cards: unknown[]) => 
   const del = env.DB.prepare('delete from cards where user_id = ?').bind(userId);
   const ins = cards.map((raw, i) => {
     const c = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
-    return env.DB.prepare(
-      `insert into cards (user_id, card_id, ord, title, sub_title, url, icon, icon_color, color, group_name, display_style, type, config, size, font_size, font_color, bg_color)
-       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-       on conflict(user_id, card_id) do update set
-         ord = excluded.ord, title = excluded.title, sub_title = excluded.sub_title, url = excluded.url,
-         icon = excluded.icon, icon_color = excluded.icon_color, color = excluded.color, group_name = excluded.group_name,
-         display_style = excluded.display_style, type = excluded.type, config = excluded.config, size = excluded.size,
-         font_size = excluded.font_size, font_color = excluded.font_color, bg_color = excluded.bg_color`
-    ).bind(
-      userId, s(c.id) || `c${i}`, i, s(c.title), s(c.subTitle), s(c.url), s(c.icon), s(c.iconColor),
-      s(c.color), s(c.group), s(c.displayStyle), s(c.type) || 'link', s(c.config), s(c.size),
-      n(c.fontSize), s(c.fontColor), s(c.bgColor)
-    );
+    const values: unknown[] = [userId, s(c.id) || `c${i}`, i];
+    for (const f of CARD_FIELD_LIST.slice(1)) {
+      values.push(f.rule.kind === 'number' ? n(c[f.key]) : s(c[f.key]) || f.dbFallback || '');
+    }
+    return env.DB.prepare(INSERT_SQL).bind(...values);
   });
   return env.DB.batch([del, ...ins]);
 };

@@ -1,7 +1,8 @@
 // 共用数据 hooks：useFetch（API GET + 错误标记 + 同 URL 去重）/ useLocalStoragePoll（轮询读取本地键）
 import { useEffect, useState } from 'react';
-import { get } from '../api/client';
-import type { ApiResp } from '../api/client';
+import { get } from '../api/request';
+import type { ApiResp } from '../api/request';
+import { readJSON } from './storage';
 
 // 同 URL 去重：短 TTL 内存缓存 + 并发请求共享同一 Promise
 // （同页多个挂件常请求相同接口，如天气/热榜/汇率/一言）
@@ -50,17 +51,13 @@ export function useFetch<T>(url: string): { data: T | null; err: boolean } {
   return { data, err };
 }
 
-// 周期读取 localStorage（JSON 数组；解析失败回落空数组），卸载清理
+// 周期读取本地 JSON 数组（非数组/解析失败回落空数组），卸载清理
 export function useLocalStoragePoll<T>(key: string, intervalMs: number): T[] {
   const [list, setList] = useState<T[]>([]);
   useEffect(() => {
     const load = () => {
-      try {
-        const raw = JSON.parse(localStorage.getItem(key) || '[]');
-        setList(Array.isArray(raw) ? raw : []);
-      } catch {
-        setList([]);
-      }
+      const raw = readJSON<unknown>(key, []);
+      setList(Array.isArray(raw) ? (raw as T[]) : []);
     };
     load();
     const t = setInterval(load, intervalMs);

@@ -1,5 +1,7 @@
 // 站点设置（本地持久化，云同步时整体进快照）：布局/时钟/搜索引擎/壁纸/简约模式/卡片
 // 自定义搜索引擎：template 用 %s 作查询占位符（OpenSearch 风格）
+import { STORAGE_KEYS, readJSON, writeJSON } from '../lib/storage';
+
 export interface CustomEngine {
   id: string;
   name: string;
@@ -172,28 +174,22 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   simpleFont: '',
 };
 
-const KEY = 'persist:settings';
-
 export function loadSettings(): SiteSettings {
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return { ...DEFAULT_SETTINGS };
-    const s = { ...DEFAULT_SETTINGS, ...(JSON.parse(raw) as Partial<SiteSettings>) };
-    // 旧值归一化：stack/grid/freeDrag 为历史形态，统一映射 standard
-    if ((s.cardLayout as string) !== 'squares') s.cardLayout = 'standard';
-    // 历史遗留键清理
-    delete (s as Record<string, unknown>).freeDragStep;
-    delete (s as Record<string, unknown>).freeDragPositions;
-    delete (s as Record<string, unknown>).simpleShowFreeDragCards;
-    delete (s as Record<string, unknown>).simpleBorder; // 零消费死设置，入库残留清理
-    const clean = JSON.stringify(s);
-    if (clean !== raw) saveSettings(s); // 清理结果回写，避免脏值滞留
-    return s;
-  } catch {
-    return { ...DEFAULT_SETTINGS };
-  }
+  const stored = readJSON<Partial<SiteSettings> | null>(STORAGE_KEYS.settings, null);
+  if (!stored || typeof stored !== 'object') return { ...DEFAULT_SETTINGS };
+  const s = { ...DEFAULT_SETTINGS, ...stored };
+  // 旧值归一化：stack/grid/freeDrag 为历史形态，统一映射 standard
+  if ((s.cardLayout as string) !== 'squares') s.cardLayout = 'standard';
+  // 历史遗留键清理
+  delete (s as Record<string, unknown>).freeDragStep;
+  delete (s as Record<string, unknown>).freeDragPositions;
+  delete (s as Record<string, unknown>).simpleShowFreeDragCards;
+  delete (s as Record<string, unknown>).simpleBorder; // 零消费死设置，入库残留清理
+  // 清理/补默认后的结果与原存量不一致才回写，避免无谓写入
+  if (JSON.stringify(s) !== JSON.stringify(stored)) saveSettings(s);
+  return s;
 }
 
 export function saveSettings(s: SiteSettings) {
-  localStorage.setItem(KEY, JSON.stringify(s));
+  writeJSON(STORAGE_KEYS.settings, s);
 }

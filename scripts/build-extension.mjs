@@ -19,7 +19,8 @@ rmSync(out, { recursive: true, force: true });
 mkdirSync(out, { recursive: true });
 
 // 1) 拷贝 dist 静态资源（排除服务端专用内容与 index.html）
-const EXCLUDE = new Set(['functions', '_headers', '_redirects', 'index.html']);
+// functions 必须排除：prepare-pages 会把它注入 dist，若被打进扩展即泄露服务端源码
+const EXCLUDE = new Set(['functions', '_headers', 'index.html']);
 cpSync(dist, out, {
   recursive: true,
   filter: (s) => {

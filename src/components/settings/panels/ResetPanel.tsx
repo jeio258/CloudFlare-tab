@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Button, Divider, message } from 'antd';
 import { useSite, DEFAULT_CARDS } from '../../../store/site';
 import { DEFAULT_SETTINGS } from '../../../store/settings';
+import { STORAGE_KEYS, keysWithPrefix, removeKey } from '../../../lib/storage';
 
 export function ResetPanel() {
   const { updateSettings, cards, setCards, resetSettings } = useSite();
@@ -68,7 +69,7 @@ export function ResetPanel() {
         <Button
           size="small"
           onClick={() => {
-            localStorage.removeItem('persist:searchHistory');
+            removeKey(STORAGE_KEYS.searchHistory);
             message.success('搜索历史已清除');
           }}
         >
@@ -85,7 +86,8 @@ export function ResetPanel() {
           danger
           onClick={() => {
             if (!confirm('将清除本设备全部本地数据并刷新页面，确认继续？')) return;
-            localStorage.clear();
+            // 本应用数据全在 persist: 前缀下（见 STORAGE_KEYS），按前缀清除等价于清空本地数据
+            keysWithPrefix('persist:').forEach(removeKey);
             location.reload();
           }}
         >

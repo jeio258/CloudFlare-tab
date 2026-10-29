@@ -1,4 +1,6 @@
 // 数据类型：与参考后端契约一致
+import type { HomeCardFields } from '../../shared/cardFields';
+
 export interface UserInfo {
   userId: string;
   username: string;
@@ -31,32 +33,13 @@ export interface DefaultData {
   created_at: string;
 }
 
-// 挂件卡片类型（单一来源：HomeCard.type 与 WidgetCards 的 WidgetType 均引用此处）
-// 运行时元组 + 由元组派生的联合类型：既作唯一类型来源，也供信任边界做白名单校验
-export const WIDGET_CARD_TYPES = [
-  'countdown', 'countdownAgg', 'memo', 'analogClock', 'digitalClock', 'calendar', 'iframe', 'rmbUpper',
-  'weather', 'hotEvents', 'exchangeRate', 'history', 'bookmarks', 'settings', 'disguise',
-] as const;
-export type WidgetCardType = (typeof WIDGET_CARD_TYPES)[number];
+// 挂件卡片类型：元组与 HomeCard 同在 shared/cardFields.ts，此处保留原导出路径供既有引用点使用
+export { WIDGET_CARD_TYPES } from '../../shared/cardFields';
+export type { WidgetCardType } from '../../shared/cardFields';
 
 // 首页卡片（云同步数据形状，对齐参考 user/push 的快照结构）
-export interface HomeCard {
-  id: string;
-  title: string;
-  subTitle: string;
-  url: string;
-  icon?: string;
-  iconColor?: string;
-  color?: string;
-  group?: string; // 所属分组名（''/缺省 = 未分组）
-  displayStyle?: 'default' | 'horizontal' | 'vertical' | 'image' | 'text'; // 展示样式（对齐参考：默认/横版/竖版/纯图/纯文本）
-  type?: 'link' | WidgetCardType; // 卡片类型（组件 / 挂件）
-  config?: string;     // 组件配置 JSON（如 {"date":"2026-12-31"}）
-  size?: '1x1' | '2x1' | '4x1' | '1x2' | '2x2' | '4x2'; // 卡片大小（列x行，对齐参考编辑弹窗「卡片大小」六选项，缺省回落 displayStyle）
-  fontSize?: number;   // 卡片名称字号覆盖（批量调整）
-  fontColor?: string;  // 卡片文字颜色覆盖（批量调整）
-  bgColor?: string;    // 卡片背景颜色覆盖（批量调整）
-}
+// 字段与可选性由 shared/cardFields.ts 字段表派生，勿在此逐字段重写
+export type HomeCard = HomeCardFields;
 
 // 底部链接（对齐参考 bottomLinks：链接名称/地址/图标）
 export interface BottomLink {

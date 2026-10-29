@@ -1,6 +1,7 @@
 // 搜索栏：设置驱动（默认引擎/联想开关），玻璃面 600×48 对齐参考
 import { useEffect, useRef, useState } from 'react';
 import { useSite } from '../../store/site';
+import { STORAGE_KEYS, readJSON, writeJSON } from '../../lib/storage';
 
 interface Engine {
   value: string;
@@ -27,19 +28,14 @@ export function allEngines(settings: { customEngines?: { id: string; name: strin
 }
 
 // 本地搜索历史（对齐参考「本地搜索历史记录」）：最多 10 条，去重置顶
-const HISTORY_KEY = 'persist:searchHistory';
 function readHistory(): string[] {
-  try {
-    const list = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
-    return Array.isArray(list) ? list.filter((x) => typeof x === 'string').slice(0, 10) : [];
-  } catch {
-    return [];
-  }
+  const list = readJSON<unknown>(STORAGE_KEYS.searchHistory, []);
+  return Array.isArray(list) ? list.filter((x): x is string => typeof x === 'string').slice(0, 10) : [];
 }
 function pushHistory(kw: string) {
   const list = readHistory().filter((x) => x !== kw);
   list.unshift(kw);
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0, 10)));
+  writeJSON(STORAGE_KEYS.searchHistory, list.slice(0, 10));
 }
 
 // JSONP 联想：同源代理 /api/search-suggest?wd=&cb=

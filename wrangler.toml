@@ -1,3 +1,4 @@
+# Pages 部署配置。须与 wrangler.workers.toml 同步：name、d1_databases、compatibility_date、compatibility_flags
 name = "cloudflare-tab"
 pages_build_output_dir = "dist"
 compatibility_date = "2025-08-16"

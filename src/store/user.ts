@@ -1,7 +1,6 @@
-// 认证状态：localStorage 'persist:user' 存 {token}，对齐参考前端存储口径
+// 认证状态：STORAGE_KEYS.user 存 {token, userInfo}；token 为单层字符串
 import type { UserInfo } from '../api/types';
-
-const KEY = 'persist:user';
+import { STORAGE_KEYS, readJSON, writeJSON, removeKey } from '../lib/storage';
 
 export interface PersistUser {
   token?: string;
@@ -9,31 +8,28 @@ export interface PersistUser {
 }
 
 export function readPersist(): PersistUser {
-  try {
-    const raw = localStorage.getItem(KEY);
-    return raw ? (JSON.parse(raw) as PersistUser) : {};
-  } catch {
-    return {};
-  }
+  return readJSON<PersistUser>(STORAGE_KEYS.user, {});
 }
 
 export function writePersist(p: PersistUser) {
-  // 对齐参考存储口径：token 字段为 JSON 编码的字符串（redux-persist 风格）
   const out: PersistUser = {};
-  if (p.token) out.token = JSON.stringify(p.token);
+  if (p.token) out.token = p.token;
   if (p.userInfo) out.userInfo = p.userInfo;
-  localStorage.setItem(KEY, JSON.stringify(out));
+  writeJSON(STORAGE_KEYS.user, out);
 }
 
 export function clearPersist() {
-  localStorage.removeItem(KEY);
+  removeKey(STORAGE_KEYS.user);
 }
 
+// 旧数据 token 为双层 JSON 编码（外层对象 + 内层字符串）；只解一层，解出字符串才采用，
+// 否则按单层原样返回，避免已迁移用户与新写入被再次解码。
 export function getToken(): string {
   const t = readPersist().token;
   if (!t) return '';
   try {
-    return JSON.parse(t) as string;
+    const decoded: unknown = JSON.parse(t);
+    return typeof decoded === 'string' ? decoded : t;
   } catch {
     return t;
   }
