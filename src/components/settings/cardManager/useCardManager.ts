@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { message } from 'antd';
 import { useSite } from '../../../store/site';
 import { parseBookmarkFile, bookmarkToCard } from '../../../lib/bookmarkImport';
-import { fetchIconsBatch } from './fetchIcons';
 
 export function useCardManager(initialBatch: boolean, initialSelect?: string) {
   const { cards, setCards, settings, updateSettings } = useSite();
@@ -40,7 +39,7 @@ export function useCardManager(initialBatch: boolean, initialSelect?: string) {
     setSelected(selected.size === cards.length ? new Set() : new Set(cards.map((c) => c.id)));
   };
 
-  // 书签导入：HTML/JSON 书签导出文件 → 卡片（按 url 去重）；导入后自动补抓缺失图标
+  // 书签导入：HTML/JSON 书签导出文件 → 卡片（按 url 去重）；icon 留空，展示时由 iconSrc 按 url 运行时生成
   const onImport = async (file: File) => {
     const text = await file.text();
     try {
@@ -54,35 +53,9 @@ export function useCardManager(initialBatch: boolean, initialSelect?: string) {
       setCards([...cards, ...newCards]);
       setImported(fresh.length);
       message.success(`已导入 ${fresh.length} 个书签${items.length - fresh.length ? `（${items.length - fresh.length} 个重复跳过）` : ''}`);
-      // 后台补抓图标，不阻塞 UI
-      const missing = newCards.filter((c) => !c.icon);
-      if (missing.length) {
-        const hide = message.loading(`正在获取 ${missing.length} 个网站图标…`, 0);
-        let cur = [...cards, ...newCards];
-        await fetchIconsBatch(missing, (id, icon) => {
-          cur = cur.map((x) => (x.id === id && !x.icon ? { ...x, icon } : x));
-          setCards(cur);
-        });
-        hide();
-        message.success('图标获取完成');
-      }
     } catch {
       message.error('文件解析失败，仅支持 HTML / JSON 书签导出文件');
     }
-  };
-
-  // 批量管理：为选中且缺图标的卡片抓取 favicon
-  const batchFetchIcons = async () => {
-    const missing = cards.filter((c) => selected.has(c.id) && !c.icon);
-    if (missing.length === 0) return message.info('选中卡片均已有图标');
-    const hide = message.loading(`正在获取 ${missing.length} 个网站图标…`, 0);
-    let cur = [...cards];
-    await fetchIconsBatch(missing, (id, icon) => {
-      cur = cur.map((x) => (x.id === id && !x.icon ? { ...x, icon } : x));
-      setCards(cur);
-    });
-    hide();
-    message.success('图标获取完成');
   };
 
   // ===== 分组管理 =====
@@ -175,7 +148,6 @@ export function useCardManager(initialBatch: boolean, initialSelect?: string) {
     remove,
     move,
     onImport,
-    batchFetchIcons,
     addGroup,
     renameGroup,
     deleteGroup,

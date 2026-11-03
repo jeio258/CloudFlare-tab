@@ -33,9 +33,6 @@ export function BatchToolbar({ m }: { m: CardManagerApi }) {
         <Button size="small" onClick={m.batchSetIcon}>
           应用
         </Button>
-        <Button size="small" onClick={m.batchFetchIcons}>
-          获取图标
-        </Button>
       </div>
       {/* 批量样式（对齐参考：批量调整字号/文字颜色/背景颜色） */}
       <div className="flex items-center gap-2">

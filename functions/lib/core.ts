@@ -24,10 +24,22 @@ export interface UserRow {
 
 export type JsonObject = Record<string, unknown>;
 
+// CORS：所有 /api/* 响应统一携带；预检由 dispatch 在路由匹配前拦截
+export const corsHeaders: Record<string, string> = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'content-type, authorization',
+  'Access-Control-Max-Age': '86400',
+};
+
 export function json(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'content-type': 'application/json;charset=utf-8', 'cache-control': 'no-store' },
+    headers: {
+      ...corsHeaders,
+      'content-type': 'application/json;charset=utf-8',
+      'cache-control': 'no-store',
+    },
   });
 }
 

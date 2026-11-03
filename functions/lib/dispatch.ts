@@ -1,12 +1,13 @@
 // API 分发核心（Pages 薄壳与 Workers 入口共用）：/api/* 路由表在此定义
 // 规则：未匹配路径 → {code:404,msg:'接口不存在'}；业务错误 → HTTP 200 + code（409 等除外）
-import { defineHandler, fail } from './core';
+import { defineHandler, fail, corsHeaders } from './core';
 import type { Env } from './core';
 import type { HandlerOptions } from './core';
 import * as authRoutes from './routes/auth';
 import * as consoleRoutes from './routes/console';
 import * as contentRoutes from './routes/content';
 import * as widgetRoutes from './routes/widgets';
+import * as iconRoutes from './icon';
 
 type RouteDef = { path: string; methods: string[]; opts: HandlerOptions };
 
@@ -33,6 +34,7 @@ const ROUTES: RouteDef[] = [
   { path: '/api/getDefaultData', methods: ['GET'], opts: { run: contentRoutes.getDefaultData } },
   { path: '/api/getDefaultDataTime', methods: ['GET'], opts: { run: contentRoutes.getDefaultDataTime } },
   { path: '/api/getShareData', methods: ['GET', 'POST'], opts: { body: 'optional', run: contentRoutes.getShareData } },
+  { path: '/api/icon', methods: ['GET'], opts: { run: iconRoutes.icon } },
 
   // 挂件
   { path: '/api/getCityList', methods: ['GET'], opts: { run: widgetRoutes.getCityList } },
@@ -67,6 +69,10 @@ const ROUTES: RouteDef[] = [
 
 // 方法匹配：路由表方法为空即所有方法放行
 export function dispatch(request: Request, env: Env): Promise<Response> {
+  // 预检请求不进路由表，直接短路返回
+  if (request.method === 'OPTIONS') {
+    return Promise.resolve(new Response(null, { status: 204, headers: corsHeaders }));
+  }
   const url = new URL(request.url);
   const method = request.method.toUpperCase();
   for (const r of ROUTES) {

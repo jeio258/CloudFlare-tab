@@ -30,27 +30,35 @@ const RULES: Record<AuthScope, Rule[]> = {
 
 const clientIp = (request: Request): string => request.headers.get('cf-connecting-ip') || 'unknown';
 
-// 累加计数并返回；窗口切换时从 1 重新开始
+// 累加计数并返回；窗口切换时从 1 重新开始；D1 异常（表缺失/瞬断）返回 1，不阻断登录
 async function bump(env: Env, rule: Rule, value: string, nowSec: number): Promise<number> {
   const windowStart = Math.floor(nowSec / rule.period);
-  const row = await env.DB.prepare(
-    `insert into auth_rate (rule, window_start, count) values (?, ?, 1)
-     on conflict(rule) do update set
-       count = case when window_start = excluded.window_start then auth_rate.count + 1 else 1 end,
-       window_start = excluded.window_start
-     returning count`
-  )
-    .bind(`${rule.name}:${value}`, windowStart)
-    .first<{ count: number }>();
-  return Number(row?.count ?? 1);
+  try {
+    const row = await env.DB.prepare(
+      `insert into auth_rate (rule, window_start, count) values (?, ?, 1)
+       on conflict(rule) do update set
+         count = case when window_start = excluded.window_start then auth_rate.count + 1 else 1 end,
+         window_start = excluded.window_start
+       returning count`
+    )
+      .bind(`${rule.name}:${value}`, windowStart)
+      .first<{ count: number }>();
+    return Number(row?.count ?? 1);
+  } catch {
+    return 1;
+  }
 }
 
 async function readCount(env: Env, rule: Rule, value: string, nowSec: number): Promise<number> {
   const windowStart = Math.floor(nowSec / rule.period);
-  const row = await env.DB.prepare('select count from auth_rate where rule = ? and window_start = ?')
-    .bind(`${rule.name}:${value}`, windowStart)
-    .first<{ count: number }>();
-  return Number(row?.count ?? 0);
+  try {
+    const row = await env.DB.prepare('select count from auth_rate where rule = ? and window_start = ?')
+      .bind(`${rule.name}:${value}`, windowStart)
+      .first<{ count: number }>();
+    return Number(row?.count ?? 0);
+  } catch {
+    return 0;
+  }
 }
 
 async function forEachRule(
@@ -76,8 +84,14 @@ export async function checkAuthRateLimit(
   account: string
 ): Promise<void> {
   await forEachRule(env, request, scope, account, async (rule, value) => {
-    const count = await readCount(env, rule, value, Math.floor(Date.now() / 1000));
-    if (count >= rule.limit) throw new ApiError(429, '尝试过于频繁，请稍后再试', 429);
+    const nowSec = Math.floor(Date.now() / 1000);
+    const count = await readCount(env, rule, value, nowSec);
+    if (count >= rule.limit) {
+      // 固定窗口：窗口起点按触发的那条 rule 计算，剩余秒 = 下一窗口起点 - 当前秒
+      const windowStart = Math.floor(nowSec / rule.period);
+      const remain = Math.max((windowStart + 1) * rule.period - nowSec, 0);
+      throw new ApiError(429, `尝试过于频繁，请 ${remain} 秒后再试`, 429);
+    }
   });
 }
 

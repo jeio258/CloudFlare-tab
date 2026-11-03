@@ -30,7 +30,7 @@ export function CardListSection({ m }: { m: CardManagerApi }) {
   const renderRow = (c: HomeCard, globalIdx: number) => (
     <div key={c.id} className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2">
       {batch && <Checkbox checked={selected.has(c.id)} onChange={() => m.toggleSelect(c.id)} />}
-      <img src={iconSrc(c.icon) || '/icons/website.svg'} alt="" className="h-8 w-8 rounded object-contain" />
+      <img src={iconSrc(c.icon, c.url) || '/icons/website.svg'} alt="" className="h-8 w-8 rounded object-contain" />
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-medium">{c.title}</div>
         <div className="truncate text-xs text-gray-400">{c.url}</div>
