@@ -1,6 +1,6 @@
 // 云同步：整份快照 push/pull（对齐后端 409 冲突契约），数据 = {settings, cards}
 // 关键：baseTimestamp 必须用后端权威 timestamp（pullWT 返回的 timestamp），而非 payload 内部时间戳
-import { get, post } from '../api/client';
+import { get, post } from '../api/request';
 import type { SiteSettings } from './settings';
 import type { HomeCard } from '../api/types';
 

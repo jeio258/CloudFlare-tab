@@ -1,5 +1,5 @@
 // 网站信息+图标抓取：标题/描述取 getWebsiteInfo；图标一律用 faviconsnap（参考项目口径）
-import { post } from '../api/client';
+import { post } from '../api/request';
 
 export interface SiteInfo {
   title: string;

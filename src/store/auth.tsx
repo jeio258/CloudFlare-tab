@@ -2,8 +2,8 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { readPersist, writePersist, clearPersist, getToken as readToken } from './user';
-import { post, get } from '../api/client';
-import type { ApiResp } from '../api/client';
+import { post, get } from '../api/request';
+import type { ApiResp } from '../api/request';
 import type { LoginData, UserInfo } from '../api/types';
 
 interface AuthState {

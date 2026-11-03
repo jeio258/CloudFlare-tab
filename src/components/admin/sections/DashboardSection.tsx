@@ -1,7 +1,7 @@
 // 仪表盘分区（A12：总用户/今日新增/分享开启数）
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../../store/auth';
-import { get } from '../../../api/client';
+import { get } from '../../../api/request';
 import { authHdr } from './shared';
 
 export function DashboardSection() {

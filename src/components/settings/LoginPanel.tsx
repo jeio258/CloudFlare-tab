@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Button, Form, Input, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useAuth } from '../../store/auth';
-import { post } from '../../api/client';
+import { post } from '../../api/request';
 
 export function LoginPanel() {
   const { login } = useAuth();

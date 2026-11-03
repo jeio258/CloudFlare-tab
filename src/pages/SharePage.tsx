@@ -1,6 +1,6 @@
 // 分享页 /s/:shareId：getShareData 四态（null 无效 / 2 已停止 / 3 不可见 / shareData 渲染）
 import { useEffect, useState } from 'react';
-import { get } from '../api/client';
+import { get } from '../api/request';
 import { normalizeCards } from '../lib/normalize';
 import { iconSrc } from '../lib/iconSrc';
 import type { HomeCard } from '../api/types';

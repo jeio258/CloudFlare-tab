@@ -4,7 +4,7 @@ import { Button, Input, InputNumber, Select, Switch, Divider } from 'antd';
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { useSite } from '../../../store/site';
 import { WALLPAPERS } from '../../home/wallpapers';
-import { get } from '../../../api/client';
+import { get } from '../../../api/request';
 
 export function HomePanel() {
   const { settings, updateSettings } = useSite();

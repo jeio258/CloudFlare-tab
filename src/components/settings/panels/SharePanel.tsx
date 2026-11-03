@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Button, Input, Switch, message } from 'antd';
 import { useAuth } from '../../../store/auth';
-import { post } from '../../../api/client';
+import { post } from '../../../api/request';
 
 export function SharePanel() {
   const { token, userInfo, setUserInfo } = useAuth();
