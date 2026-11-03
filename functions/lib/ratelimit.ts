@@ -3,7 +3,7 @@
 import { ApiError } from './core';
 import type { Env } from './core';
 
-export type AuthScope = 'login' | 'register' | 'findPassword';
+type AuthScope = 'login' | 'register' | 'findPassword';
 
 interface Rule {
   name: string;

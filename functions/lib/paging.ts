@@ -1,5 +1,5 @@
 // console 通用分页：GET query 或 POST JSON body 均可传参
-export interface Paging {
+interface Paging {
   page: number;
   pageSize: number;
   keyword: string;

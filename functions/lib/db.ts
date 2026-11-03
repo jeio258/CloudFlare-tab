@@ -59,7 +59,7 @@ export const deleteUserCascade = (env: Env, id: string) =>
     env.DB.prepare('delete from users where id = ?').bind(id),
   ]);
 
-export interface UserDataRow {
+interface UserDataRow {
   user_id: string;
   data: string;
   timestamp: number;

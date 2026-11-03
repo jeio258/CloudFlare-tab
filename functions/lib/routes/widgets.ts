@@ -122,7 +122,7 @@ async function selfFetchInfo(url: string): Promise<{ title: string; icon: string
   };
 }
 
-// icon 不在此生成：前端 siteInfo.ts 一律用 faviconsnap 覆盖 icon 字段
+// icon 不在此生成：前端 siteInfo.ts 统一走 /api/icon 代理，此处 icon 字段保持空返回
 export const getWebsiteInfo = async ({ body }: RouteContext) => {
   const empty = { title: '', icon: '', description: '' };
   const raw = String(body.url || '').trim();

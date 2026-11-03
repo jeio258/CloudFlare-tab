@@ -22,19 +22,12 @@ export interface LoginData {
   userInfo: UserInfo;
 }
 
-export interface NoticeData {
-  title: string;
-  content: string;
-  timeCode: string;
-}
-
 export interface DefaultData {
   data: unknown;
   created_at: string;
 }
 
 // 挂件卡片类型：元组与 HomeCard 同在 shared/cardFields.ts，此处保留原导出路径供既有引用点使用
-export { WIDGET_CARD_TYPES } from '../../shared/cardFields';
 export type { WidgetCardType } from '../../shared/cardFields';
 
 // 首页卡片（云同步数据形状，对齐参考 user/push 的快照结构）
@@ -46,12 +39,4 @@ export interface BottomLink {
   name: string;
   url: string;
   icon?: string;
-}
-
-export interface HomeData {
-  home: {
-    cards: HomeCard[];
-    showMode?: 'wallpaper' | 'color';
-    color?: string;
-  };
 }

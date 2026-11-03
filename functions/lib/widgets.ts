@@ -161,7 +161,7 @@ export async function exchangeRates() {
 }
 
 // ===== 一言 =====
-export interface SayItem {
+interface SayItem {
   content: string;
   author: string;
   from?: string;

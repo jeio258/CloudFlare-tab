@@ -276,7 +276,9 @@ const authHdr = { authorization: token };
     skip('getWebsiteInfo title/icon（uapis 上游不可用）');
   } else {
     eq('getWebsiteInfo title', body?.data?.title, 'Example Domain');
-    eq('getWebsiteInfo icon 由 uapis 解析为字符串', typeof body?.data?.icon === 'string' && body.data.icon.length > 0, true);
+    // 契约 { title, icon, description }：icon 为字符串即可（可为空，前端按 url 走 /api/icon 兜底）
+    eq('getWebsiteInfo icon 为字符串(可为空)', typeof body?.data?.icon === 'string', true);
+    eq('getWebsiteInfo description 为字符串', typeof body?.data?.description === 'string', true);
   }
 }
 
@@ -426,7 +428,7 @@ const authHdr = { authorization: token };
   });
   eq('卡片图标不被放大(image-size-responsive)', notUpscaled, true);
 
-  // 图标一律按其域名归一为 faviconsnap（已是 faviconsnap / 本站路径则原样）
+  // 图标归一为 /api/icon 代理：http(s) 与旧 faviconsnap 格式按域名转代理，本站路径原样
   await page.evaluate(() => {
     localStorage.setItem('persist:cards', JSON.stringify([
       { id: 'ic1', title: 'IC1', subTitle: '', url: 'https://www.pc528.net', icon: 'https://www.pc528.net/favicon.ico' },
@@ -441,9 +443,9 @@ const authHdr = { authorization: token };
     const im = document.querySelector(`[data-card-id="${i}"] img`);
     return im ? im.getAttribute('src') : '';
   }, id);
-  eq('图标按域名归一为 faviconsnap(直连站点 favicon)', await iconSrcOf('ic1'), 'https://faviconsnap.com/api/favicon?url=www.pc528.net');
-  eq('图标按域名归一为 faviconsnap(自定义图片)', await iconSrcOf('ic2'), 'https://faviconsnap.com/api/favicon?url=www.ilovepdf.com');
-  eq('已是 faviconsnap 则原样', await iconSrcOf('ic3'), 'https://faviconsnap.com/api/favicon?url=github.com');
+  eq('图标按域名归一为 /api/icon(直连站点 favicon)', await iconSrcOf('ic1'), '/api/icon?host=www.pc528.net');
+  eq('图标按域名归一为 /api/icon(自定义图片)', await iconSrcOf('ic2'), '/api/icon?host=www.ilovepdf.com');
+  eq('旧 faviconsnap 格式迁移为 /api/icon', await iconSrcOf('ic3'), '/api/icon?host=github.com');
   eq('本站路径图标原样', await iconSrcOf('ic4'), '/icons/ref-welcome.svg');
 
   // 同 URL 去重——天气浮窗 + 天气卡同时挂载只发 1 次 /api/getWeather

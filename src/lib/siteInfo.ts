@@ -1,4 +1,4 @@
-// 网站信息+图标抓取：标题/描述取 getWebsiteInfo；图标一律用 faviconsnap（参考项目口径）
+// 网站信息+图标抓取：标题/描述取 getWebsiteInfo；图标一律走 /api/icon 自建代理
 import { post } from '../api/request';
 
 export interface SiteInfo {
@@ -7,17 +7,16 @@ export interface SiteInfo {
   description: string;
 }
 
-// 图标一律默认 faviconsnap：https://faviconsnap.com/api/favicon?url=<域名>
-// （用「域名」而非 origin：origin 形式对部分站点返回 HTML，会破图）
-function faviconSnapUrl(url: string): string {
+// 图标走自建代理 /api/icon?host=<域名>（host 由后端正则校验，前端不做编码）
+function iconProxyUrl(url: string): string {
   try {
-    return `https://faviconsnap.com/api/favicon?url=${encodeURIComponent(new URL(url).hostname)}`;
+    return `/api/icon?host=${new URL(url).hostname}`;
   } catch {
     return '';
   }
 }
 
-// 抓取网站信息：标题/描述取上游；icon 一律用 faviconsnap
+// 抓取网站信息：标题/描述取上游；icon 一律用 /api/icon 代理
 export async function fetchSiteInfoWithFavicon(url: string): Promise<SiteInfo | null> {
   let info: SiteInfo | null = null;
   try {
@@ -27,6 +26,6 @@ export async function fetchSiteInfoWithFavicon(url: string): Promise<SiteInfo | 
     /* 上游失败走兜底 */
   }
   if (!info) info = { title: '', icon: '', description: '' };
-  info.icon = faviconSnapUrl(url) || info.icon;
+  info.icon = iconProxyUrl(url) || info.icon;
   return info;
 }

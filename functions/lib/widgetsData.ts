@@ -31,7 +31,7 @@ export const SAY_FALLBACK: { content: string; author: string }[] = [
   { content: '天生我材必有用，千金散尽还复来。', author: '李白' },
 ];
 
-export interface City {
+interface City {
   label: string;
   value: string;
   lat: number;

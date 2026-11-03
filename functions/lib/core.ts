@@ -22,7 +22,7 @@ export interface UserRow {
   share_enabled: number;
 }
 
-export type JsonObject = Record<string, unknown>;
+type JsonObject = Record<string, unknown>;
 
 // CORS：所有 /api/* 响应统一携带；预检由 dispatch 在路由匹配前拦截
 export const corsHeaders: Record<string, string> = {

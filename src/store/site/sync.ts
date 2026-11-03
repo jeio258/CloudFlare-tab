@@ -7,7 +7,7 @@ import { pullSnapshot, pushSnapshot, type Snapshot } from '../sync';
 import { collectMemos, restoreMemos } from './memo';
 import { sanitizeSettings } from './settings';
 
-export type SyncState = 'idle' | 'syncing' | 'pulled' | 'pushed';
+type SyncState = 'idle' | 'syncing' | 'pulled' | 'pushed';
 
 interface SiteSyncOptions {
   token: string;
@@ -18,7 +18,7 @@ interface SiteSyncOptions {
   setCards: (cards: HomeCard[]) => void;
 }
 
-export interface SiteSync {
+interface SiteSync {
   syncState: SyncState;
   syncMsg: string;
   pull: () => Promise<void>;

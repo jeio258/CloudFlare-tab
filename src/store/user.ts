@@ -2,7 +2,7 @@
 import type { UserInfo } from '../api/types';
 import { STORAGE_KEYS, readJSON, writeJSON, removeKey } from '../lib/storage';
 
-export interface PersistUser {
+interface PersistUser {
   token?: string;
   userInfo?: UserInfo;
 }

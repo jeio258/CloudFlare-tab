@@ -2,24 +2,24 @@
 // src/api/types.ts（类型）、src/lib/normalize.ts（信任边界净化）、functions/lib/db.ts（行映射）均由此派生，
 // 新增/改名卡片字段只改本文件。纯常量与纯函数，不得引入 React / Workers 运行时。
 
-export const WIDGET_CARD_TYPES = [
+const WIDGET_CARD_TYPES = [
   'countdown', 'countdownAgg', 'memo', 'analogClock', 'digitalClock', 'calendar', 'iframe', 'rmbUpper',
   'weather', 'hotEvents', 'exchangeRate', 'history', 'bookmarks', 'settings', 'disguise',
 ] as const;
 export type WidgetCardType = (typeof WIDGET_CARD_TYPES)[number];
 
-export const CARD_TYPES = ['link', ...WIDGET_CARD_TYPES] as const;
-export const CARD_SIZES = ['1x1', '2x1', '4x1', '1x2', '2x2', '4x2'] as const;
-export const CARD_DISPLAY_STYLES = ['default', 'horizontal', 'vertical', 'image', 'text'] as const;
+const CARD_TYPES = ['link', ...WIDGET_CARD_TYPES] as const;
+const CARD_SIZES = ['1x1', '2x1', '4x1', '1x2', '2x2', '4x2'] as const;
+const CARD_DISPLAY_STYLES = ['default', 'horizontal', 'vertical', 'image', 'text'] as const;
 
-export type CardRule =
+type CardRule =
   | { kind: 'text' }
   | { kind: 'url' } // 仅 http(s)，用于阻断 javascript: 等 scheme
   | { kind: 'color' } // #RGB ~ #RRGGBBAA
   | { kind: 'enum'; values: readonly string[] }
   | { kind: 'number'; min: number; max: number };
 
-export interface CardFieldDef {
+interface CardFieldDef {
   /** 前端驼峰字段名（HomeCard 键） */
   key: string;
   /** D1 cards 表列名 */
@@ -61,8 +61,7 @@ export const CARD_FIELDS = [
 export const CARD_FIELD_LIST: readonly CardFieldDef[] = CARD_FIELDS;
 
 type FieldDef = (typeof CARD_FIELDS)[number];
-export type CardFieldKey = FieldDef['key'];
-export type CardColumn = FieldDef['column'];
+type CardFieldKey = FieldDef['key'];
 
 type RuleValue<R> = R extends { kind: 'enum'; values: readonly (infer V)[] }
   ? V
@@ -70,7 +69,7 @@ type RuleValue<R> = R extends { kind: 'enum'; values: readonly (infer V)[] }
     ? number
     : string;
 
-export type CardFieldValue<K extends CardFieldKey> = RuleValue<Extract<FieldDef, { key: K }>['rule']>;
+type CardFieldValue<K extends CardFieldKey> = RuleValue<Extract<FieldDef, { key: K }>['rule']>;
 
 type RequiredKey = Extract<FieldDef, { required: true }>['key'];
 type OptionalKey = Exclude<CardFieldKey, RequiredKey>;

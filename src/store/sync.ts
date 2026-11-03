@@ -11,7 +11,7 @@ export interface Snapshot {
   memos?: Record<string, string>;
 }
 
-export interface PullResult {
+interface PullResult {
   snapshot: Snapshot | null;
   /** 后端权威时间戳（作为下次 push 的 baseTimestamp） */
   timestamp: number;

@@ -2,7 +2,7 @@
 // 自定义搜索引擎：template 用 %s 作查询占位符（OpenSearch 风格）
 import { STORAGE_KEYS, readJSON, writeJSON } from '../lib/storage';
 
-export interface CustomEngine {
+interface CustomEngine {
   id: string;
   name: string;
   template: string;
